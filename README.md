@@ -14,3 +14,7 @@ Desenvolver uma solução em LTN Torch que resolva o problema do Sudoku.
 
 - torch
 - LTN
+
+## Referências
+
+https://www.kaggle.com/datasets/bryanpark/sudoku?resource=download
