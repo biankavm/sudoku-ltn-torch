@@ -1,2 +1,8 @@
-# sudoku-ltn-torch
-Um repositório para armazenar o trabalho final de IA, que consiste em implementar uma solução para o problema do Sudoku em LTN Torch.
+# Trabalho Final de Inteligência Artificial (2025/1)
+## Equipe
+- **Bianka Vasconcelos**
+- **Micael Viana**
+- **Vinicius Chagas**
+
+## Objetivo
+Desenvolver uma solução em LTN Torch que resolva o problema do Sudoku.
