@@ -1,0 +1,1 @@
+# LTN predicates for Sudoku constraints and heuristics 
