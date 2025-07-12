@@ -1,1 +1,1 @@
-# Solver module for Sudoku LTN implementation 
+# Solver modules 

@@ -1,1 +1,1 @@
-# Core module for Sudoku LTN implementation 
+# Core modules 

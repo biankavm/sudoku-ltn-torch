@@ -1,1 +1,1 @@
-# Utilities module for Sudoku LTN implementation 
+# Utility modules 
