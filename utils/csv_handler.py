@@ -7,4 +7,4 @@ def read_csv(file_path):
         reader = csv.reader(file)
         return list(reader)
 
-print(read_csv("../csvs/table1.csv"))
+# print(read_csv("../csvs/table1.csv"))
