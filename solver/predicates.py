@@ -8,21 +8,21 @@ from typing import Tuple, List, Optional
 class ValidCellModel(nn.Module):
     """
     Predicate para determinar se uma célula é válida no contexto do Sudoku.
-    Entrada: (row, col, value, board_state)
+    Suporta tamanhos dinâmicos de tabuleiro (4x4 e 9x9).
+    Entrada: (row, col, value, board_state, board_size)
     Saída: grau de verdade [0,1] indicando se a célula é válida
     """
     
-    def __init__(self, board_size: int = 9):
+    def __init__(self, max_board_size: int = 9):
         super(ValidCellModel, self).__init__()
-        self.board_size = board_size
-        self.box_size = int(np.sqrt(board_size))
+        self.max_board_size = max_board_size
+        self.max_input_size = 2 + 1 + (max_board_size * max_board_size) + 1  # pos + value + board + size
         
         # Rede neural para aprender a validação de células
-        # Entrada: posição (row, col), valor, estado do tabuleiro
-        input_size = 2 + 1 + (board_size * board_size)  # pos + value + board
-        
         self.network = nn.Sequential(
-            nn.Linear(input_size, 128),
+            nn.Linear(self.max_input_size, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
             nn.ReLU(),
             nn.Linear(128, 64),
             nn.ReLU(),
@@ -33,7 +33,7 @@ class ValidCellModel(nn.Module):
         )
         
     def forward(self, row: torch.Tensor, col: torch.Tensor, 
-                value: torch.Tensor, board: torch.Tensor) -> torch.Tensor:
+                value: torch.Tensor, board: torch.Tensor, board_size: torch.Tensor) -> torch.Tensor:
         """
         Forward pass do predicate ValidCell
         
@@ -42,6 +42,7 @@ class ValidCellModel(nn.Module):
             col: tensor com índices das colunas  
             value: tensor com valores a serem validados
             board: tensor com estado atual do tabuleiro
+            board_size: tensor com o tamanho do tabuleiro
             
         Returns:
             tensor com graus de verdade para cada combinação
@@ -49,21 +50,25 @@ class ValidCellModel(nn.Module):
         batch_size = row.shape[0]
         
         # Normalizar posições para [0,1]
-        row_norm = row.float() / (self.board_size - 1)
-        col_norm = col.float() / (self.board_size - 1)
+        row_norm = row.float() / (board_size.float() - 1)
+        col_norm = col.float() / (board_size.float() - 1)
         
         # Normalizar valores para [0,1]
-        value_norm = (value.float() - 1) / (self.board_size - 1)
+        value_norm = (value.float() - 1) / (board_size.float() - 1)
         
         # Flatten do tabuleiro para cada exemplo
-        board_flat = board.view(batch_size, -1).float() / self.board_size
+        board_flat = board.view(batch_size, -1).float() / board_size.float()
+        
+        # Normalizar tamanho do tabuleiro
+        size_norm = board_size.float() / self.max_board_size
         
         # Concatenar todas as features
         features = torch.cat([
             row_norm.unsqueeze(1),
             col_norm.unsqueeze(1), 
             value_norm.unsqueeze(1),
-            board_flat
+            board_flat,
+            size_norm.unsqueeze(1)
         ], dim=1)
         
         return self.network(features).squeeze()
@@ -71,17 +76,18 @@ class ValidCellModel(nn.Module):
 class RowConstraintModel(nn.Module):
     """
     Predicate para constraint de linha: cada número deve aparecer exatamente uma vez por linha
+    Suporta tamanhos dinâmicos de tabuleiro.
     """
     
-    def __init__(self, board_size: int = 9):
+    def __init__(self, max_board_size: int = 9):
         super(RowConstraintModel, self).__init__()
-        self.board_size = board_size
-        
-        # Rede para aprender constraint de linha
-        input_size = 1 + 1 + (board_size * board_size)  # row + value + board
+        self.max_board_size = max_board_size
+        self.max_input_size = 1 + 1 + (max_board_size * max_board_size) + 1  # row + value + board + size
         
         self.network = nn.Sequential(
-            nn.Linear(input_size, 64),
+            nn.Linear(self.max_input_size, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
             nn.ReLU(),
             nn.Linear(64, 32),
             nn.ReLU(),
@@ -90,20 +96,22 @@ class RowConstraintModel(nn.Module):
         )
         
     def forward(self, row: torch.Tensor, value: torch.Tensor, 
-                board: torch.Tensor) -> torch.Tensor:
+                board: torch.Tensor, board_size: torch.Tensor) -> torch.Tensor:
         """
         Verifica se o valor pode ser colocado na linha sem violar constraints
         """
         batch_size = row.shape[0]
         
-        row_norm = row.float() / (self.board_size - 1)
-        value_norm = (value.float() - 1) / (self.board_size - 1)
-        board_flat = board.view(batch_size, -1).float() / self.board_size
+        row_norm = row.float() / (board_size.float() - 1)
+        value_norm = (value.float() - 1) / (board_size.float() - 1)
+        board_flat = board.view(batch_size, -1).float() / board_size.float()
+        size_norm = board_size.float() / self.max_board_size
         
         features = torch.cat([
             row_norm.unsqueeze(1),
             value_norm.unsqueeze(1),
-            board_flat
+            board_flat,
+            size_norm.unsqueeze(1)
         ], dim=1)
         
         return self.network(features).squeeze()
@@ -111,16 +119,18 @@ class RowConstraintModel(nn.Module):
 class ColConstraintModel(nn.Module):
     """
     Predicate para constraint de coluna: cada número deve aparecer exatamente uma vez por coluna
+    Suporta tamanhos dinâmicos de tabuleiro.
     """
     
-    def __init__(self, board_size: int = 9):
+    def __init__(self, max_board_size: int = 9):
         super(ColConstraintModel, self).__init__()
-        self.board_size = board_size
-        
-        input_size = 1 + 1 + (board_size * board_size)  # col + value + board
+        self.max_board_size = max_board_size
+        self.max_input_size = 1 + 1 + (max_board_size * max_board_size) + 1  # col + value + board + size
         
         self.network = nn.Sequential(
-            nn.Linear(input_size, 64),
+            nn.Linear(self.max_input_size, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
             nn.ReLU(),
             nn.Linear(64, 32),
             nn.ReLU(),
@@ -129,20 +139,22 @@ class ColConstraintModel(nn.Module):
         )
         
     def forward(self, col: torch.Tensor, value: torch.Tensor, 
-                board: torch.Tensor) -> torch.Tensor:
+                board: torch.Tensor, board_size: torch.Tensor) -> torch.Tensor:
         """
         Verifica se o valor pode ser colocado na coluna sem violar constraints
         """
         batch_size = col.shape[0]
         
-        col_norm = col.float() / (self.board_size - 1)
-        value_norm = (value.float() - 1) / (self.board_size - 1)
-        board_flat = board.view(batch_size, -1).float() / self.board_size
+        col_norm = col.float() / (board_size.float() - 1)
+        value_norm = (value.float() - 1) / (board_size.float() - 1)
+        board_flat = board.view(batch_size, -1).float() / board_size.float()
+        size_norm = board_size.float() / self.max_board_size
         
         features = torch.cat([
             col_norm.unsqueeze(1),
             value_norm.unsqueeze(1),
-            board_flat
+            board_flat,
+            size_norm.unsqueeze(1)
         ], dim=1)
         
         return self.network(features).squeeze()
@@ -150,17 +162,18 @@ class ColConstraintModel(nn.Module):
 class BoxConstraintModel(nn.Module):
     """
     Predicate para constraint de quadrante: cada número deve aparecer exatamente uma vez por quadrante
+    Suporta tamanhos dinâmicos de tabuleiro.
     """
     
-    def __init__(self, board_size: int = 9):
+    def __init__(self, max_board_size: int = 9):
         super(BoxConstraintModel, self).__init__()
-        self.board_size = board_size
-        self.box_size = int(np.sqrt(board_size))
-        
-        input_size = 2 + 1 + (board_size * board_size)  # box_row + box_col + value + board
+        self.max_board_size = max_board_size
+        self.max_input_size = 2 + 1 + (max_board_size * max_board_size) + 1  # box_row + box_col + value + board + size
         
         self.network = nn.Sequential(
-            nn.Linear(input_size, 64),
+            nn.Linear(self.max_input_size, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
             nn.ReLU(),
             nn.Linear(64, 32),
             nn.ReLU(),
@@ -169,26 +182,29 @@ class BoxConstraintModel(nn.Module):
         )
         
     def forward(self, row: torch.Tensor, col: torch.Tensor, 
-                value: torch.Tensor, board: torch.Tensor) -> torch.Tensor:
+                value: torch.Tensor, board: torch.Tensor, board_size: torch.Tensor) -> torch.Tensor:
         """
         Verifica se o valor pode ser colocado no quadrante sem violar constraints
         """
         batch_size = row.shape[0]
         
         # Calcular índices do quadrante
-        box_row = row // self.box_size
-        box_col = col // self.box_size
+        box_size = torch.sqrt(board_size.float()).int()
+        box_row = row // box_size
+        box_col = col // box_size
         
-        box_row_norm = box_row.float() / (self.box_size - 1)
-        box_col_norm = box_col.float() / (self.box_size - 1)
-        value_norm = (value.float() - 1) / (self.board_size - 1)
-        board_flat = board.view(batch_size, -1).float() / self.board_size
+        box_row_norm = box_row.float() / (box_size.float() - 1)
+        box_col_norm = box_col.float() / (box_size.float() - 1)
+        value_norm = (value.float() - 1) / (board_size.float() - 1)
+        board_flat = board.view(batch_size, -1).float() / board_size.float()
+        size_norm = board_size.float() / self.max_board_size
         
         features = torch.cat([
             box_row_norm.unsqueeze(1),
             box_col_norm.unsqueeze(1),
             value_norm.unsqueeze(1),
-            board_flat
+            board_flat,
+            size_norm.unsqueeze(1)
         ], dim=1)
         
         return self.network(features).squeeze()
@@ -196,17 +212,18 @@ class BoxConstraintModel(nn.Module):
 class NakedSingleModel(nn.Module):
     """
     Predicate para heurística Naked Single: se uma célula tem apenas um candidato possível
+    Suporta tamanhos dinâmicos de tabuleiro.
     """
     
-    def __init__(self, board_size: int = 9):
+    def __init__(self, max_board_size: int = 9):
         super(NakedSingleModel, self).__init__()
-        self.board_size = board_size
-        
-        # Entrada: posição + tabuleiro + candidatos possíveis
-        input_size = 2 + (board_size * board_size) + board_size  # pos + board + candidates
+        self.max_board_size = max_board_size
+        self.max_input_size = 2 + (max_board_size * max_board_size) + max_board_size + 1  # pos + board + candidates + size
         
         self.network = nn.Sequential(
-            nn.Linear(input_size, 96),
+            nn.Linear(self.max_input_size, 192),
+            nn.ReLU(),
+            nn.Linear(192, 96),
             nn.ReLU(),
             nn.Linear(96, 48),
             nn.ReLU(),
@@ -217,7 +234,7 @@ class NakedSingleModel(nn.Module):
         )
         
     def forward(self, row: torch.Tensor, col: torch.Tensor, 
-                board: torch.Tensor, candidates: torch.Tensor) -> torch.Tensor:
+                board: torch.Tensor, candidates: torch.Tensor, board_size: torch.Tensor) -> torch.Tensor:
         """
         Determina se uma célula é um Naked Single
         
@@ -226,18 +243,21 @@ class NakedSingleModel(nn.Module):
             col: índices das colunas
             board: estado do tabuleiro
             candidates: vetor binário de candidatos possíveis para a célula
+            board_size: tamanho do tabuleiro
         """
         batch_size = row.shape[0]
         
-        row_norm = row.float() / (self.board_size - 1)
-        col_norm = col.float() / (self.board_size - 1)
-        board_flat = board.view(batch_size, -1).float() / self.board_size
+        row_norm = row.float() / (board_size.float() - 1)
+        col_norm = col.float() / (board_size.float() - 1)
+        board_flat = board.view(batch_size, -1).float() / board_size.float()
+        size_norm = board_size.float() / self.max_board_size
         
         features = torch.cat([
             row_norm.unsqueeze(1),
             col_norm.unsqueeze(1),
             board_flat,
-            candidates.float()
+            candidates.float(),
+            size_norm.unsqueeze(1)
         ], dim=1)
         
         return self.network(features).squeeze()
@@ -246,17 +266,18 @@ class HiddenSingleModel(nn.Module):
     """
     Predicate para heurística Hidden Single: se um número aparece como candidato 
     em apenas uma célula dentro de uma unidade (linha, coluna ou quadrante)
+    Suporta tamanhos dinâmicos de tabuleiro.
     """
     
-    def __init__(self, board_size: int = 9):
+    def __init__(self, max_board_size: int = 9):
         super(HiddenSingleModel, self).__init__()
-        self.board_size = board_size
-        
-        # Entrada: posição + valor + tabuleiro + informações da unidade
-        input_size = 2 + 1 + (board_size * board_size) + (3 * board_size)  # pos + value + board + unit_info
+        self.max_board_size = max_board_size
+        self.max_input_size = 2 + 1 + (max_board_size * max_board_size) + (3 * max_board_size) + 1  # pos + value + board + unit_info + size
         
         self.network = nn.Sequential(
-            nn.Linear(input_size, 128),
+            nn.Linear(self.max_input_size, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
             nn.ReLU(),
             nn.Linear(128, 64),
             nn.ReLU(),
@@ -267,7 +288,7 @@ class HiddenSingleModel(nn.Module):
         )
         
     def forward(self, row: torch.Tensor, col: torch.Tensor, value: torch.Tensor,
-                board: torch.Tensor, unit_candidates: torch.Tensor) -> torch.Tensor:
+                board: torch.Tensor, unit_candidates: torch.Tensor, board_size: torch.Tensor) -> torch.Tensor:
         """
         Determina se uma célula-valor é um Hidden Single
         
@@ -277,20 +298,23 @@ class HiddenSingleModel(nn.Module):
             value: valor a ser testado
             board: estado do tabuleiro
             unit_candidates: candidatos para o valor nas unidades (linha, coluna, quadrante)
+            board_size: tamanho do tabuleiro
         """
         batch_size = row.shape[0]
         
-        row_norm = row.float() / (self.board_size - 1)
-        col_norm = col.float() / (self.board_size - 1)
-        value_norm = (value.float() - 1) / (self.board_size - 1)
-        board_flat = board.view(batch_size, -1).float() / self.board_size
+        row_norm = row.float() / (board_size.float() - 1)
+        col_norm = col.float() / (board_size.float() - 1)
+        value_norm = (value.float() - 1) / (board_size.float() - 1)
+        board_flat = board.view(batch_size, -1).float() / board_size.float()
+        size_norm = board_size.float() / self.max_board_size
         
         features = torch.cat([
             row_norm.unsqueeze(1),
             col_norm.unsqueeze(1),
             value_norm.unsqueeze(1),
             board_flat,
-            unit_candidates.float()
+            unit_candidates.float(),
+            size_norm.unsqueeze(1)
         ], dim=1)
         
         return self.network(features).squeeze()
@@ -298,18 +322,19 @@ class HiddenSingleModel(nn.Module):
 class SudokuPredicates:
     """
     Classe principal que encapsula todos os predicates LTN para Sudoku
+    Suporta tamanhos dinâmicos de tabuleiro (4x4 e 9x9)
     """
     
-    def __init__(self, board_size: int = 9):
-        self.board_size = board_size
+    def __init__(self, max_board_size: int = 9):
+        self.max_board_size = max_board_size
         
-        # Instanciar todos os modelos de predicates
-        self.valid_cell_model = ValidCellModel(board_size)
-        self.row_constraint_model = RowConstraintModel(board_size)
-        self.col_constraint_model = ColConstraintModel(board_size)
-        self.box_constraint_model = BoxConstraintModel(board_size)
-        self.naked_single_model = NakedSingleModel(board_size)
-        self.hidden_single_model = HiddenSingleModel(board_size)
+        # Instanciar todos os modelos de predicates com tamanho máximo
+        self.valid_cell_model = ValidCellModel(max_board_size)
+        self.row_constraint_model = RowConstraintModel(max_board_size)
+        self.col_constraint_model = ColConstraintModel(max_board_size)
+        self.box_constraint_model = BoxConstraintModel(max_board_size)
+        self.naked_single_model = NakedSingleModel(max_board_size)
+        self.hidden_single_model = HiddenSingleModel(max_board_size)
         
         # Converter para predicates LTN
         self.ValidCell = ltn.Predicate(self.valid_cell_model)
@@ -343,4 +368,34 @@ class SudokuPredicates:
         params.extend(self.box_constraint_model.parameters())
         params.extend(self.naked_single_model.parameters())
         params.extend(self.hidden_single_model.parameters())
-        return params 
+        return params
+    
+    def valid_cell_model(self, row: torch.Tensor, col: torch.Tensor, 
+                        value: torch.Tensor, board: torch.Tensor, board_size: torch.Tensor) -> torch.Tensor:
+        """Wrapper para o modelo ValidCell com tamanho dinâmico"""
+        return self.valid_cell_model(row, col, value, board, board_size)
+    
+    def row_constraint_model(self, row: torch.Tensor, value: torch.Tensor, 
+                           board: torch.Tensor, board_size: torch.Tensor) -> torch.Tensor:
+        """Wrapper para o modelo RowConstraint com tamanho dinâmico"""
+        return self.row_constraint_model(row, value, board, board_size)
+    
+    def col_constraint_model(self, col: torch.Tensor, value: torch.Tensor, 
+                           board: torch.Tensor, board_size: torch.Tensor) -> torch.Tensor:
+        """Wrapper para o modelo ColConstraint com tamanho dinâmico"""
+        return self.col_constraint_model(col, value, board, board_size)
+    
+    def box_constraint_model(self, row: torch.Tensor, col: torch.Tensor, 
+                           value: torch.Tensor, board: torch.Tensor, board_size: torch.Tensor) -> torch.Tensor:
+        """Wrapper para o modelo BoxConstraint com tamanho dinâmico"""
+        return self.box_constraint_model(row, col, value, board, board_size)
+    
+    def naked_single_model(self, row: torch.Tensor, col: torch.Tensor, 
+                          board: torch.Tensor, candidates: torch.Tensor, board_size: torch.Tensor) -> torch.Tensor:
+        """Wrapper para o modelo NakedSingle com tamanho dinâmico"""
+        return self.naked_single_model(row, col, board, candidates, board_size)
+    
+    def hidden_single_model(self, row: torch.Tensor, col: torch.Tensor, value: torch.Tensor,
+                           board: torch.Tensor, unit_candidates: torch.Tensor, board_size: torch.Tensor) -> torch.Tensor:
+        """Wrapper para o modelo HiddenSingle com tamanho dinâmico"""
+        return self.hidden_single_model(row, col, value, board, unit_candidates, board_size) 

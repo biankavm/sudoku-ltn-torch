@@ -215,9 +215,9 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Gera sudokus fechados inválidos")
-    parser.add_argument("--input", default="../data/sudoku_closed_valid.csv", 
+    parser.add_argument("--input", default="../data/9x9/sudoku_closed_valid.csv", 
                        help="Arquivo CSV com sudokus válidos")
-    parser.add_argument("--output", default="../data/sudoku_closed_invalid.csv", 
+    parser.add_argument("--output", default="../data/9x9/sudoku_closed_invalid.csv", 
                        help="Arquivo CSV para sudokus inválidos")
     parser.add_argument("--count", type=int, default=10000, 
                        help="Número de sudokus inválidos a gerar")

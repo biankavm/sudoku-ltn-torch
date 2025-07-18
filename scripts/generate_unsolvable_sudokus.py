@@ -348,9 +348,9 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Gera sudokus abertos impossíveis de resolver")
-    parser.add_argument("--input", default="sudoku-ltn-torch/data/sudoku_closed_valid.csv", 
+    parser.add_argument("--input", default="sudoku-ltn-torch/data/9x9/sudoku_closed_valid.csv", 
                        help="Arquivo CSV com sudokus válidos")
-    parser.add_argument("--output", default="sudoku-ltn-torch/data/sudoku_open_unsolvable.csv", 
+    parser.add_argument("--output", default="sudoku-ltn-torch/data/9x9/sudoku_open_unsolvable.csv", 
                        help="Arquivo CSV para sudokus impossíveis")
     parser.add_argument("--count", type=int, default=5000, 
                        help="Número de sudokus impossíveis a gerar")

@@ -22,7 +22,7 @@ def test_4x4_unsolvable():
     board1 = create_unsolvable_4x4_sudoku()
     
     print("Tabuleiro inicial:")
-    board1.print_board()
+    print(board1)
     
     print(f"\nAnálise:")
     info = board1.get_board_info()
@@ -42,7 +42,7 @@ def test_4x4_unsolvable():
     board2 = create_another_unsolvable_4x4_sudoku()
     
     print("Tabuleiro inicial:")
-    board2.print_board()
+    print(board2)
     
     print(f"\nAnálise:")
     info = board2.get_board_info()

@@ -1,0 +1,26 @@
+RELATÓRIO DE TREINAMENTO - SISTEMA LTN SUDOKU
+============================================================
+Data: 2025-07-18 18:33:01
+Equipe: Bianka Vasconcelos, Micael Viana, Vinicius Chagas
+Tamanho do tabuleiro: 4x4
+
+RESULTADOS POR SITUAÇÃO:
+----------------------------------------
+
+Sudokus 4x4 Fechados Válidos:
+  ❌ Erro: The size of tensor a (16) must match the size of tensor b (32) at non-singleton dimension 1
+
+Sudokus 4x4 Fechados Inválidos:
+  ❌ Erro: The size of tensor a (16) must match the size of tensor b (32) at non-singleton dimension 1
+
+Sudokus 4x4 Abertos Solucionáveis:
+  ❌ Erro: The size of tensor a (16) must match the size of tensor b (32) at non-singleton dimension 1
+
+Sudokus 4x4 Abertos Impossíveis:
+  ❌ Erro: The size of tensor a (16) must match the size of tensor b (32) at non-singleton dimension 1
+
+RESUMO GERAL:
+Tamanho do tabuleiro: 4x4
+Total de amostras: 0
+Tempo total: 0.00s
+Modelo salvo em: models/sudoku_ltn_integrated_4x4.pth

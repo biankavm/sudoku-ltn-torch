@@ -211,7 +211,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Gera sudokus abertos impossíveis (versão simples)")
-    parser.add_argument("--output", default="../data/sudoku_open_unsolvable.csv", 
+    parser.add_argument("--output", default="../data/9x9/sudoku_open_unsolvable.csv", 
                        help="Arquivo CSV para sudokus impossíveis")
     parser.add_argument("--count", type=int, default=5000, 
                        help="Número de sudokus impossíveis a gerar")
