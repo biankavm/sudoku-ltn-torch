@@ -1,0 +1,36 @@
+RELATÓRIO DE TREINAMENTO - SISTEMA LTN SUDOKU
+============================================================
+Data: 2025-07-12 17:17:44
+Equipe: Bianka Vasconcelos, Micael Viana, Vinicius Chagas
+
+RESULTADOS POR SITUAÇÃO:
+----------------------------------------
+
+Sudokus Fechados Válidos:
+  Amostras: 2000
+  Épocas: 5
+  Tempo: 139.00s
+  Loss final: 0.0000
+  Satisfação final: 0.5000
+
+Sudokus Fechados Inválidos:
+  Amostras: 1717
+  Épocas: 5
+  Tempo: 119.34s
+  Loss final: 0.1402
+  Satisfação final: 0.5083
+
+Sudokus Abertos Solucionáveis:
+  ❌ Erro: Using a target size (torch.Size([1])) that is different to the input size (torch.Size([])) is deprecated. Please ensure they have the same size.
+
+Sudokus Abertos Impossíveis:
+  Amostras: 2000
+  Épocas: 5
+  Tempo: 1015.18s
+  Loss final: 0.2039
+  Satisfação final: 0.2309
+
+RESUMO GERAL:
+Total de amostras: 5717
+Tempo total: 1273.52s
+Modelo salvo em: models/sudoku_ltn_integrated_9x9.pth

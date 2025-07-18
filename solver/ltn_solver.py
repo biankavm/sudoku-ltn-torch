@@ -115,6 +115,80 @@ class SudokuLTNSolver:
         self.training_history['epochs'] = epochs
         print(f"Treinamento concluído! Loss final: {avg_loss:.4f}")
     
+    def train_with_boards(self, boards: List[SudokuBoard], epochs: int = 100, 
+                         batch_size: int = 32, situation_type: str = "general", is_open_sudokus: bool = True):
+        """
+        Treina o solver usando uma lista de objetos SudokuBoard
+        
+        Args:
+            boards: lista de objetos SudokuBoard
+            epochs: número de épocas de treinamento
+            batch_size: tamanho do batch
+            situation_type: tipo de situação sendo treinada
+            is_open_sudokus: True se são sudokus abertos, False se são fechados
+        """
+        print(f"Iniciando treinamento para '{situation_type}' com {len(boards)} tabuleiros")
+        
+        # Gerar dados de treinamento a partir dos boards
+        training_data = self.data_generator.generate_training_data_from_boards(boards, is_open_sudokus)
+        
+        if not training_data:
+            print("Erro: Nenhum dado de treinamento gerado!")
+            return
+        
+        print(f"Dados de treinamento gerados. Iniciando {epochs} épocas...")
+        
+        for epoch in range(epochs):
+            epoch_loss = 0.0
+            epoch_satisfaction = 0.0
+            num_batches = 0
+            
+            # Treinar ValidCell
+            if 'valid_cell' in training_data:
+                loss, satisfaction = self._train_valid_cell_batch(training_data['valid_cell'], batch_size)
+                epoch_loss += loss
+                epoch_satisfaction += satisfaction
+                num_batches += 1
+            
+            # Treinar Constraints
+            if 'constraints' in training_data:
+                loss, satisfaction = self._train_constraints_batch(training_data['constraints'], batch_size)
+                epoch_loss += loss
+                epoch_satisfaction += satisfaction
+                num_batches += 1
+            
+            # Treinar NakedSingle (só se há dados)
+            if 'naked_single' in training_data:
+                naked_single_data = training_data['naked_single']
+                if len(naked_single_data[0]) > 0:  # Verificar se há dados reais
+                    loss, satisfaction = self._train_naked_single_batch(naked_single_data, batch_size)
+                    epoch_loss += loss
+                    epoch_satisfaction += satisfaction
+                    num_batches += 1
+            
+            # Treinar HiddenSingle (só se há dados)
+            if 'hidden_single' in training_data:
+                hidden_single_data = training_data['hidden_single']
+                if len(hidden_single_data[0]) > 0:  # Verificar se há dados reais
+                    loss, satisfaction = self._train_hidden_single_batch(hidden_single_data, batch_size)
+                    epoch_loss += loss
+                    epoch_satisfaction += satisfaction
+                    num_batches += 1
+            
+            # Calcular médias
+            avg_loss = epoch_loss / max(num_batches, 1)
+            avg_satisfaction = epoch_satisfaction / max(num_batches, 1)
+            
+            # Armazenar histórico
+            self.training_history['losses'].append(avg_loss)
+            self.training_history['satisfactions'].append(avg_satisfaction)
+            
+            if epoch % 10 == 0:
+                print(f"  Época {epoch}: Loss = {avg_loss:.4f}, Satisfação = {avg_satisfaction:.4f}")
+        
+        self.training_history['epochs'] += epochs
+        print(f"Treinamento '{situation_type}' concluído! Loss final: {avg_loss:.4f}")
+    
     def _train_valid_cell_batch(self, data: Tuple, batch_size: int) -> Tuple[float, float]:
         """
         Treina o predicate ValidCell

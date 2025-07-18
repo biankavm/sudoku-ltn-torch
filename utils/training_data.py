@@ -194,6 +194,16 @@ class SudokuTrainingDataGenerator:
                 # Label: 1.0 se é naked single (apenas 1 candidato), 0.0 caso contrário
                 labels.append(1.0 if len(candidates) == 1 else 0.0)
         
+        # Se não há dados, retornar tensors vazios mas válidos
+        if not rows:
+            return (
+                torch.empty(0, dtype=torch.long),
+                torch.empty(0, dtype=torch.long),
+                torch.empty(0, self.board_size, self.board_size),
+                torch.empty(0, self.board_size),
+                torch.empty(0, dtype=torch.float32)
+            )
+        
         return (
             torch.tensor(rows, dtype=torch.long),
             torch.tensor(cols, dtype=torch.long),
@@ -230,6 +240,17 @@ class SudokuTrainingDataGenerator:
                             # Verificar se é hidden single
                             is_hidden_single = self._is_hidden_single(board, r, c, val)
                             labels.append(1.0 if is_hidden_single else 0.0)
+        
+        # Se não há dados, retornar tensors vazios mas válidos
+        if not rows:
+            return (
+                torch.empty(0, dtype=torch.long),
+                torch.empty(0, dtype=torch.long),
+                torch.empty(0, dtype=torch.long),
+                torch.empty(0, self.board_size, self.board_size),
+                torch.empty(0, 3 * self.board_size),
+                torch.empty(0, dtype=torch.float32)
+            )
         
         return (
             torch.tensor(rows, dtype=torch.long),
@@ -354,6 +375,61 @@ class SudokuTrainingDataGenerator:
         
         print("Gerando dados para HiddenSingle...")
         training_data['hidden_single'] = self.generate_hidden_single_data(boards)
+        
+        print("Dados de treinamento gerados com sucesso!")
+        return training_data
+    
+    def generate_training_data_from_boards(self, boards: List[SudokuBoard], is_open_sudokus: bool = True) -> Dict[str, Tuple]:
+        """
+        Gera todos os dados de treinamento a partir de uma lista de objetos SudokuBoard
+        
+        Args:
+            boards: lista de objetos SudokuBoard
+            is_open_sudokus: True se são sudokus abertos, False se são fechados
+            
+        Returns:
+            dicionário com todos os dados de treinamento
+        """
+        if not boards:
+            print("Lista de tabuleiros vazia!")
+            return {}
+        
+        print(f"Gerando dados de treinamento para {len(boards)} tabuleiros")
+        print(f"  - Tipo: {'Sudokus abertos' if is_open_sudokus else 'Sudokus fechados'}")
+        
+        training_data = {}
+        
+        print("Gerando dados para ValidCell...")
+        training_data['valid_cell'] = self.generate_valid_cell_data(boards)
+        
+        print("Gerando dados para Constraints...")
+        training_data['constraints'] = self.generate_constraint_data(boards)
+        
+        # Heurísticas só se aplicam a sudokus abertos (com células vazias)
+        if is_open_sudokus:
+            print("Gerando dados para NakedSingle...")
+            training_data['naked_single'] = self.generate_naked_single_data(boards)
+            
+            print("Gerando dados para HiddenSingle...")
+            training_data['hidden_single'] = self.generate_hidden_single_data(boards)
+        else:
+            print("⚠️  Pulando heurísticas - sudokus fechados não têm células vazias")
+            # Gerar tensors vazios mas válidos para manter compatibilidade
+            training_data['naked_single'] = (
+                torch.empty(0, dtype=torch.long),
+                torch.empty(0, dtype=torch.long),
+                torch.empty(0, self.board_size, self.board_size),
+                torch.empty(0, self.board_size),
+                torch.empty(0, dtype=torch.float32)
+            )
+            training_data['hidden_single'] = (
+                torch.empty(0, dtype=torch.long),
+                torch.empty(0, dtype=torch.long),
+                torch.empty(0, dtype=torch.long),
+                torch.empty(0, self.board_size, self.board_size),
+                torch.empty(0, 3 * self.board_size),
+                torch.empty(0, dtype=torch.float32)
+            )
         
         print("Dados de treinamento gerados com sucesso!")
         return training_data 
