@@ -10,6 +10,8 @@
 
 Desenvolver uma solução em LTN Torch que resolva o problema do Sudoku.
 
+Na parte das heuristicas, gera-se uma base sintetica para treinar o modelo.
+
 ## Dependências
 
 - torch

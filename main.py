@@ -39,6 +39,52 @@ def create_sample_sudoku():
         [0, 0, 0, 4, 1, 9, 0, 0, 5],
         [0, 0, 0, 0, 8, 0, 0, 7, 9]
     ]
+    # board_data = [
+    #     []
+    # ]
+    return SudokuBoard(board_data)
+
+def create_unsolvable_4x4_sudoku():
+    """
+    Cria um tabuleiro Sudoku 4x4 SEM SOLUÇÃO para demonstração
+    """
+    # Tabuleiro 4x4 impossível de resolver
+    # Problema: Duas células vazias na mesma linha/coluna/caixa
+    # que não podem ser preenchidas sem violar as regras
+    board_data = [
+        [1, 2, 3, 0],  # Linha 1: falta o 4
+        [3, 4, 0, 2],  # Linha 2: falta o 1
+        [0, 1, 2, 3],  # Linha 3: falta o 4
+        [2, 3, 1, 0]   # Linha 4: falta o 4
+    ]
+    
+    # Explicação do problema:
+    # - Célula (0,3) precisa ser 4
+    # - Célula (2,0) precisa ser 4  
+    # - Mas ambas estão na mesma coluna (coluna 0 e 3)
+    # - E na mesma caixa 2x2 (canto superior direito)
+    # - IMPOSSÍVEL: não pode ter dois 4s na mesma coluna/caixa
+    
+    return SudokuBoard(board_data)
+
+def create_another_unsolvable_4x4_sudoku():
+    """
+    Outro exemplo de Sudoku 4x4 SEM SOLUÇÃO
+    """
+    # Tabuleiro 4x4 com contradição nas regras
+    board_data = [
+        [1, 2, 0, 0],  # Linha 1: faltam 3 e 4
+        [2, 1, 0, 0],  # Linha 2: faltam 3 e 4
+        [0, 0, 3, 4],  # Linha 3: faltam 1 e 2
+        [0, 0, 4, 3]   # Linha 4: faltam 1 e 2
+    ]
+    
+    # Explicação do problema:
+    # - Caixa superior esquerda: precisa de 3 e 4
+    # - Caixa superior direita: precisa de 3 e 4
+    # - Mas 3 e 4 já estão nas caixas inferiores
+    # - IMPOSSÍVEL: não pode ter 3 e 4 em duas caixas diferentes
+    
     return SudokuBoard(board_data)
 
 def sudoku_string_to_board(sudoku_str: str) -> SudokuBoard:
@@ -100,31 +146,32 @@ def train_specialized_models(solver: SudokuLTNSolver, data_dir: str = "data", ep
     print("\n🎯 TREINAMENTO ESPECIALIZADO POR SITUAÇÃO")
     print("=" * 60)
     
+    max_samples_global = 500
     # Definir os tipos de treinamento
     training_configs = [
         {
             "name": "Sudokus Fechados Válidos",
             "file": "sudoku_closed_valid.csv",
             "description": "Aprende a reconhecer sudokus completos e corretos",
-            "max_samples": 2000
+            "max_samples": max_samples_global
         },
         {
             "name": "Sudokus Fechados Inválidos", 
             "file": "sudoku_closed_invalid.csv",
             "description": "Aprende a identificar sudokus completos mas incorretos",
-            "max_samples": 2000
+            "max_samples": max_samples_global
         },
         {
             "name": "Sudokus Abertos Solucionáveis",
             "file": "sudoku_open_solvable.csv", 
             "description": "Aprende a resolver sudokus parciais com solução",
-            "max_samples": 2000
+            "max_samples": max_samples_global
         },
         {
             "name": "Sudokus Abertos Impossíveis",
             "file": "sudoku_open_unsolvable.csv",
             "description": "Aprende a identificar sudokus impossíveis de resolver",
-            "max_samples": 2000
+            "max_samples": max_samples_global
         }
     ]
     
@@ -335,7 +382,7 @@ def main():
         else:
             print("⚠️  Nenhum modelo integrado encontrado. Usando modelo não treinado.")
         
-        # Criar tabuleiro de exemplo
+        # Criar tabuleiro de exemplo (9x9, não 4x4)
         board = create_sample_sudoku()
         
         print("\n📋 TABULEIRO INICIAL:")
