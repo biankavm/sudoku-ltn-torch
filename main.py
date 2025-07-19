@@ -246,6 +246,91 @@ def solve_open_board(board: SudokuBoard, solver: SudokuLTNSolver) -> Dict:
     candidates_matrix = board.get_candidates_matrix()
     
     cells_without_candidates = []
+    possible_moves = []
+    
+    for (row, col), candidates in candidates_matrix.items():
+        print(f"  Célula ({row},{col}): candidatos = {candidates}")
+        if not candidates:
+            cells_without_candidates.append((row, col))
+        else:
+            # Adicionar o primeiro candidato como sugestão
+            first_candidate = list(candidates)[0]
+            possible_moves.append((row, col, first_candidate))
+    
+    if cells_without_candidates:
+        print(f"\n❌ CÉLULAS SEM CANDIDATOS:")
+        for row, col in cells_without_candidates:
+            print(f"  - Célula ({row},{col}) não tem candidatos válidos")
+        
+        return {
+            'solvable': False,
+            'reason': 'Existem células sem candidatos válidos',
+            'cells_without_candidates': cells_without_candidates
+        }
+    
+    # Classificação final
+    if len(possible_moves) > 0:
+        print(f"\n✅ RESULTADO: TABULEIRO SOLUCIONÁVEL")
+        print(f"📝 Motivo: Encontradas {len(possible_moves)} jogadas possíveis")
+        
+        # Mostrar todas as jogadas encontradas
+        print(f"\n🎯 TODAS AS JOGADAS POSSÍVEIS ({len(possible_moves)} encontradas):")
+        for i, (row, col, value) in enumerate(possible_moves, 1):
+            print(f"  {i}️⃣ ({row},{col}) = {value}")
+        
+        return {
+            'solvable': True,
+            'reason': f'Encontradas {len(possible_moves)} jogadas possíveis',
+            'total_moves': len(possible_moves),
+            'suggested_moves': possible_moves,
+            'all_moves': possible_moves
+        }
+    else:
+        print(f"\n❌ RESULTADO: TABULEIRO NÃO SOLUCIONÁVEL")
+        print(f"📝 Motivo: Nenhuma jogada válida encontrada")
+        
+        return {
+            'solvable': False,
+            'reason': 'Nenhuma jogada válida encontrada',
+            'total_moves': 0,
+            'suggested_moves': [],
+            'all_moves': []
+        }
+
+def check_solvability(board: SudokuBoard, solver: SudokuLTNSolver) -> Dict:
+    """
+    Questão 3: Verifica se um tabuleiro aberto é solucionável
+    """
+    print("\n🔍 QUESTÃO 3: VERIFICANDO SOLUCIONABILIDADE")
+    print("=" * 60)
+    
+    print("📋 Tabuleiro:")
+    print(board)
+    
+    # Análise inicial
+    info = board.get_board_info()
+    print(f"\n📊 ANÁLISE INICIAL:")
+    print(f"  Tamanho: {board.size}x{board.size}")
+    print(f"  Tipo: Aberto (com células vazias)")
+    print(f"  Válido: {'✅ Sim' if info['valido'] else '❌ Não'}")
+    print(f"  Posições abertas: {len(info['posicoes_abertas'])}")
+    
+    if not info['valido']:
+        print(f"\n🚨 CONFLITOS ENCONTRADOS:")
+        for conflict in info['conflitos']:
+            print(f"  - Número {conflict['numero']} aparece {conflict['ocorrencias']} vezes na {conflict['local']}")
+        
+        return {
+            'solvable': False,
+            'reason': 'Tabuleiro inicial inválido',
+            'conflicts': info['conflitos']
+        }
+    
+    # Verificar candidatos para cada célula vazia
+    print(f"\n🔍 ANALISANDO CANDIDATOS:")
+    candidates_matrix = board.get_candidates_matrix()
+    
+    cells_without_candidates = []
     for (row, col), candidates in candidates_matrix.items():
         print(f"  Célula ({row},{col}): candidatos = {candidates}")
         if not candidates:
@@ -263,7 +348,7 @@ def solve_open_board(board: SudokuBoard, solver: SudokuLTNSolver) -> Dict:
         }
     
     # Analisar possíveis jogadas usando heurísticas
-    print(f"\n🎯 ANALISANDO POSSÍVEIS JOGADAS:")
+    print(f"\n🎯 ANALISANDO HEURÍSTICAS:")
     
     possible_moves = []
     
@@ -363,85 +448,6 @@ def solve_open_board(board: SudokuBoard, solver: SudokuLTNSolver) -> Dict:
             unique_moves.append(move)
             seen_positions.add((row, col))
     
-    # Classificação final
-    if len(unique_moves) > 0:
-        print(f"\n✅ RESULTADO: TABULEIRO SOLUCIONÁVEL")
-        print(f"📝 Motivo: Foram encontradas {len(unique_moves)} jogadas possíveis")
-        
-        # Mostrar todas as jogadas encontradas
-        print(f"\n🎯 TODAS AS JOGADAS POSSÍVEIS ({len(unique_moves)} encontradas):")
-        for i, (row, col, value, description) in enumerate(unique_moves, 1):
-            print(f"  {i} {description}: ({row},{col}) = {value}")
-        
-        return {
-            'solvable': True,
-            'reason': f'Foram encontradas {len(unique_moves)} jogadas possíveis',
-            'total_moves': len(unique_moves),
-            'suggested_moves': unique_moves,  # Agora retorna todas as jogadas
-            'all_moves': unique_moves
-        }
-    else:
-        print(f"\n❌ RESULTADO: TABULEIRO NÃO SOLUCIONÁVEL")
-        print(f"📝 Motivo: Nenhuma jogada válida encontrada")
-        
-        return {
-            'solvable': False,
-            'reason': 'Nenhuma jogada válida encontrada',
-            'total_moves': 0,
-            'suggested_moves': [],
-            'all_moves': []
-        }
-
-def check_solvability(board: SudokuBoard, solver: SudokuLTNSolver) -> Dict:
-    """
-    Questão 3: Verifica se um tabuleiro aberto é solucionável
-    """
-    print("\n🔍 QUESTÃO 3: VERIFICANDO SOLUCIONABILIDADE")
-    print("=" * 60)
-    
-    print("📋 Tabuleiro:")
-    print(board)
-    
-    # Análise inicial
-    info = board.get_board_info()
-    print(f"\n📊 ANÁLISE INICIAL:")
-    print(f"  Tamanho: {board.size}x{board.size}")
-    print(f"  Tipo: Aberto (com células vazias)")
-    print(f"  Válido: {'✅ Sim' if info['valido'] else '❌ Não'}")
-    print(f"  Posições abertas: {len(info['posicoes_abertas'])}")
-    
-    if not info['valido']:
-        print(f"\n🚨 CONFLITOS ENCONTRADOS:")
-        for conflict in info['conflitos']:
-            print(f"  - Número {conflict['numero']} aparece {conflict['ocorrencias']} vezes na {conflict['local']}")
-        
-        return {
-            'solvable': False,
-            'reason': 'Tabuleiro inicial inválido',
-            'conflicts': info['conflitos']
-        }
-    
-    # Verificar candidatos para cada célula vazia
-    print(f"\n🔍 ANALISANDO CANDIDATOS:")
-    candidates_matrix = board.get_candidates_matrix()
-    
-    cells_without_candidates = []
-    for (row, col), candidates in candidates_matrix.items():
-        print(f"  Célula ({row},{col}): candidatos = {candidates}")
-        if not candidates:
-            cells_without_candidates.append((row, col))
-    
-    if cells_without_candidates:
-        print(f"\n❌ CÉLULAS SEM CANDIDATOS:")
-        for row, col in cells_without_candidates:
-            print(f"  - Célula ({row},{col}) não tem candidatos válidos")
-        
-        return {
-            'solvable': False,
-            'reason': 'Existem células sem candidatos válidos',
-            'cells_without_candidates': cells_without_candidates
-        }
-    
     # Tentar resolver para verificar solucionabilidade
     print(f"\n🔍 TESTANDO RESOLUÇÃO...")
     resultado = solver.solve_sudoku(board)
@@ -455,7 +461,9 @@ def check_solvability(board: SudokuBoard, solver: SudokuLTNSolver) -> Dict:
         return {
             'solvable': True,
             'reason': 'Tabuleiro foi resolvido com sucesso',
-            'solution': resultado['board_final']
+            'solution': resultado['board_final'],
+            'heuristics_found': len(unique_moves),
+            'heuristic_moves': unique_moves
         }
     else:
         print(f"\n❌ RESULTADO: NÃO SOLUCIONÁVEL")
@@ -467,7 +475,9 @@ def check_solvability(board: SudokuBoard, solver: SudokuLTNSolver) -> Dict:
         return {
             'solvable': False,
             'reason': resultado['motivo'],
-            'remaining_positions': resultado.get('posicoes_restantes', 0)
+            'remaining_positions': resultado.get('posicoes_restantes', 0),
+            'heuristics_found': len(unique_moves),
+            'heuristic_moves': unique_moves
         }
 
 def get_training_configs_4x4(data_dir: str) -> List[Dict]:
@@ -813,7 +823,7 @@ def main():
     
     # Treinar modelo 4x4
     if args.train_4x4:
-        print(f"\n🎓 TREINANDO MODELO 4x4")
+        print(f"\n�� TREINANDO MODELO 4x4")
         try:
             model_path, training_results = train_model_for_dimension(4, args.data_dir, args.epochs)
             print(f"\n🎉 TREINAMENTO 4x4 CONCLUÍDO!")
