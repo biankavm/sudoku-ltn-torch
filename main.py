@@ -214,9 +214,9 @@ def classify_closed_board(board: SudokuBoard) -> Dict:
 
 def solve_open_board(board: SudokuBoard, solver: SudokuLTNSolver) -> Dict:
     """
-    Questão 2: Resolve um tabuleiro aberto
+    Questão 2: Classifica um tabuleiro aberto e sugere jogadas possíveis
     """
-    print("\n🧩 QUESTÃO 2: RESOLVENDO TABULEIRO ABERTO")
+    print("\n🧩 QUESTÃO 2: CLASSIFICANDO TABULEIRO ABERTO")
     print("=" * 60)
     
     print("📋 Tabuleiro inicial:")
@@ -234,32 +234,163 @@ def solve_open_board(board: SudokuBoard, solver: SudokuLTNSolver) -> Dict:
         print(f"\n🚨 CONFLITOS ENCONTRADOS:")
         for conflict in info['conflitos']:
             print(f"  - Número {conflict['numero']} aparece {conflict['ocorrencias']} vezes na {conflict['local']}")
+        
         return {
-            'success': False,
+            'solvable': False,
             'reason': 'Tabuleiro inicial inválido',
             'conflicts': info['conflitos']
         }
     
-    # Tentar resolver
-    print(f"\n🔍 INICIANDO RESOLUÇÃO...")
-    resultado = solver.solve_sudoku(board)
+    # Verificar candidatos para cada célula vazia
+    print(f"\n🔍 ANALISANDO CANDIDATOS:")
+    candidates_matrix = board.get_candidates_matrix()
     
-    print(f"\n📊 RESULTADO:")
-    print(f"  Sucesso: {'✅ Sim' if resultado['sucesso'] else '❌ Não'}")
-    print(f"  Motivo: {resultado['motivo']}")
-    print(f"  Iterações: {resultado['iteracoes']}")
+    cells_without_candidates = []
+    for (row, col), candidates in candidates_matrix.items():
+        print(f"  Célula ({row},{col}): candidatos = {candidates}")
+        if not candidates:
+            cells_without_candidates.append((row, col))
     
-    if resultado['sucesso']:
-        print(f"\n📋 Tabuleiro resolvido:")
-        print(resultado['board_final'])
-    else:
-        if 'posicoes_restantes' in resultado:
-            print(f"  Posições restantes: {resultado['posicoes_restantes']}")
+    if cells_without_candidates:
+        print(f"\n❌ CÉLULAS SEM CANDIDATOS:")
+        for row, col in cells_without_candidates:
+            print(f"  - Célula ({row},{col}) não tem candidatos válidos")
         
-        print(f"\n📋 Estado final:")
-        print(resultado['board_final'])
+        return {
+            'solvable': False,
+            'reason': 'Existem células sem candidatos válidos',
+            'cells_without_candidates': cells_without_candidates
+        }
     
-    return resultado
+    # Analisar possíveis jogadas usando heurísticas
+    print(f"\n🎯 ANALISANDO POSSÍVEIS JOGADAS:")
+    
+    possible_moves = []
+    
+    # 1. Verificar Naked Singles
+    print("  🔍 Procurando Naked Singles...")
+    naked_singles = []
+    for (row, col), candidates in candidates_matrix.items():
+        if len(candidates) == 1:
+            value = list(candidates)[0]
+            naked_singles.append((row, col, value, "Naked Single"))
+            print(f"    ✅ Naked Single: ({row},{col}) = {value}")
+    
+    possible_moves.extend(naked_singles)
+    
+    # 2. Verificar Hidden Singles
+    print("  🔍 Procurando Hidden Singles...")
+    hidden_singles = []
+    
+    # Verificar linhas
+    for row in range(board.size):
+        for value in range(1, board.size + 1):
+            cells_with_value = []
+            for col in range(board.size):
+                if board.board[row, col] == 0 and value in board.get_possible_numbers(row, col):
+                    cells_with_value.append((row, col))
+            
+            if len(cells_with_value) == 1:
+                r, c = cells_with_value[0]
+                hidden_singles.append((r, c, value, f"Hidden Single (linha {row})"))
+                print(f"    ✅ Hidden Single: ({r},{c}) = {value} (linha {row})")
+    
+    # Verificar colunas
+    for col in range(board.size):
+        for value in range(1, board.size + 1):
+            cells_with_value = []
+            for row in range(board.size):
+                if board.board[row, col] == 0 and value in board.get_possible_numbers(row, col):
+                    cells_with_value.append((row, col))
+            
+            if len(cells_with_value) == 1:
+                r, c = cells_with_value[0]
+                hidden_singles.append((r, c, value, f"Hidden Single (coluna {col})"))
+                print(f"    ✅ Hidden Single: ({r},{c}) = {value} (coluna {col})")
+    
+    # Verificar quadrantes
+    box_size = int(np.sqrt(board.size))
+    for box_row in range(0, board.size, box_size):
+        for box_col in range(0, board.size, box_size):
+            for value in range(1, board.size + 1):
+                cells_with_value = []
+                for r in range(box_row, box_row + box_size):
+                    for c in range(box_col, box_col + box_size):
+                        if board.board[r, c] == 0 and value in board.get_possible_numbers(r, c):
+                            cells_with_value.append((r, c))
+                
+                if len(cells_with_value) == 1:
+                    r, c = cells_with_value[0]
+                    box_idx = (box_row // box_size) * box_size + (box_col // box_size)
+                    hidden_singles.append((r, c, value, f"Hidden Single (quadrante {box_idx})"))
+                    print(f"    ✅ Hidden Single: ({r},{c}) = {value} (quadrante {box_idx})")
+    
+    possible_moves.extend(hidden_singles)
+    
+    # 3. Verificar movimentos baseados em ValidCell (maior confiança)
+    print("  🔍 Analisando movimentos por confiança...")
+    confidence_moves = []
+    
+    for (row, col), candidates in candidates_matrix.items():
+        best_confidence = 0
+        best_value = None
+        
+        for value in candidates:
+            # Simular o movimento
+            temp_board = SudokuBoard(board.board.copy())
+            temp_board.board[row, col] = value
+            
+            # Verificar se é válido
+            if temp_board.is_valid():
+                # Calcular confiança baseada no número de candidatos
+                confidence = 1.0 / len(candidates)  # Menos candidatos = maior confiança
+                if confidence > best_confidence:
+                    best_confidence = confidence
+                    best_value = value
+        
+        if best_value is not None:
+            confidence_moves.append((row, col, best_value, f"Movimento por confiança ({best_confidence:.2f})"))
+            print(f"    📊 Movimento sugerido: ({row},{col}) = {best_value} (confiança: {best_confidence:.2f})")
+    
+    possible_moves.extend(confidence_moves)
+    
+    # Remover duplicatas
+    unique_moves = []
+    seen_positions = set()
+    for move in possible_moves:
+        row, col, value, description = move
+        if (row, col) not in seen_positions:
+            unique_moves.append(move)
+            seen_positions.add((row, col))
+    
+    # Classificação final
+    if len(unique_moves) > 0:
+        print(f"\n✅ RESULTADO: TABULEIRO SOLUCIONÁVEL")
+        print(f"📝 Motivo: Foram encontradas {len(unique_moves)} jogadas possíveis")
+        
+        # Mostrar todas as jogadas encontradas
+        print(f"\n🎯 TODAS AS JOGADAS POSSÍVEIS ({len(unique_moves)} encontradas):")
+        for i, (row, col, value, description) in enumerate(unique_moves, 1):
+            print(f"  {i}️⃣ {description}: ({row},{col}) = {value}")
+        
+        return {
+            'solvable': True,
+            'reason': f'Foram encontradas {len(unique_moves)} jogadas possíveis',
+            'total_moves': len(unique_moves),
+            'suggested_moves': unique_moves,  # Agora retorna todas as jogadas
+            'all_moves': unique_moves
+        }
+    else:
+        print(f"\n❌ RESULTADO: TABULEIRO NÃO SOLUCIONÁVEL")
+        print(f"📝 Motivo: Nenhuma jogada válida encontrada")
+        
+        return {
+            'solvable': False,
+            'reason': 'Nenhuma jogada válida encontrada',
+            'total_moves': 0,
+            'suggested_moves': [],
+            'all_moves': []
+        }
 
 def check_solvability(board: SudokuBoard, solver: SudokuLTNSolver) -> Dict:
     """
@@ -651,14 +782,14 @@ def main():
         elif board.is_open():
             print(f"\n🔓 TABULEIRO ABERTO DETECTADO")
             print("Escolha a operação:")
-            print("  2 - Questão 2: Resolver tabuleiro aberto")
+            print("  2 - Questão 2: Classificar tabuleiro aberto e sugerir jogadas")
             print("  3 - Questão 3: Verificar se é solucionável")
             
             while True:
                 try:
                     choice = input("\nDigite sua escolha (2 ou 3): ").strip()
                     if choice == "2":
-                        print("\nExecutando Questão 2: Resolução de tabuleiro aberto")
+                        print("\nExecutando Questão 2: Classificação de tabuleiro aberto")
                         result = solve_open_board(board, solver)
                         break
                     elif choice == "3":
