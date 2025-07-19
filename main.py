@@ -484,7 +484,7 @@ def get_training_configs_4x4(data_dir: str) -> List[Dict]:
     """
     Retorna as configurações de treinamento para 4x4
     """
-    max_samples = 500
+    max_samples = 20000
     base_path = os.path.join(data_dir, "4x4")
     
     training_configs = [
