@@ -371,7 +371,7 @@ def solve_open_board(board: SudokuBoard, solver: SudokuLTNSolver) -> Dict:
         # Mostrar todas as jogadas encontradas
         print(f"\n🎯 TODAS AS JOGADAS POSSÍVEIS ({len(unique_moves)} encontradas):")
         for i, (row, col, value, description) in enumerate(unique_moves, 1):
-            print(f"  {i}️⃣ {description}: ({row},{col}) = {value}")
+            print(f"  {i} {description}: ({row},{col}) = {value}")
         
         return {
             'solvable': True,
