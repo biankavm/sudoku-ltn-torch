@@ -183,8 +183,8 @@ class SudokuLTNSolver:
             self.training_history['losses'].append(avg_loss)
             self.training_history['satisfactions'].append(avg_satisfaction)
             
-            if epoch % 10 == 0:
-                print(f"  Época {epoch}: Loss = {avg_loss:.4f}, Satisfação = {avg_satisfaction:.4f}")
+            # if epoch % 10 == 0:
+            print(f"  Época {epoch}: Loss = {avg_loss:.4f}, Satisfação = {avg_satisfaction:.4f}")
         
         self.training_history['epochs'] += epochs
         print(f"Treinamento '{situation_type}' concluído! Loss final: {avg_loss:.4f}")
@@ -208,7 +208,8 @@ class SudokuLTNSolver:
             self.optimizer.zero_grad()
             
             # Forward pass - usar o modelo diretamente em vez do predicate LTN
-            predictions = self.predicates.valid_cell_model(batch_rows, batch_cols, batch_values, batch_boards)
+            batch_size_tensor = torch.full((len(batch_rows),), self.board_size, dtype=torch.long)
+            predictions = self.predicates.call_valid_cell_model(batch_rows, batch_cols, batch_values, batch_boards, batch_size_tensor)
             
             # Loss usando BCE
             loss = nn.functional.binary_cross_entropy(predictions, batch_labels)
@@ -243,7 +244,8 @@ class SudokuLTNSolver:
                 
                 self.optimizer.zero_grad()
                 
-                predictions = self.predicates.row_constraint_model(batch_indices, batch_values, batch_boards)
+                batch_size_tensor = torch.full((len(batch_indices),), self.board_size, dtype=torch.long)
+                predictions = self.predicates.call_row_constraint_model(batch_indices, batch_values, batch_boards, batch_size_tensor)
                 loss = nn.functional.binary_cross_entropy(predictions, batch_labels)
                 
                 loss.backward()
@@ -265,7 +267,8 @@ class SudokuLTNSolver:
                 
                 self.optimizer.zero_grad()
                 
-                predictions = self.predicates.col_constraint_model(batch_indices, batch_values, batch_boards)
+                batch_size_tensor = torch.full((len(batch_indices),), self.board_size, dtype=torch.long)
+                predictions = self.predicates.call_col_constraint_model(batch_indices, batch_values, batch_boards, batch_size_tensor)
                 loss = nn.functional.binary_cross_entropy(predictions, batch_labels)
                 
                 loss.backward()
@@ -288,7 +291,8 @@ class SudokuLTNSolver:
                 
                 self.optimizer.zero_grad()
                 
-                predictions = self.predicates.box_constraint_model(batch_row_indices, batch_col_indices, batch_values, batch_boards)
+                batch_size_tensor = torch.full((len(batch_row_indices),), self.board_size, dtype=torch.long)
+                predictions = self.predicates.call_box_constraint_model(batch_row_indices, batch_col_indices, batch_values, batch_boards, batch_size_tensor)
                 loss = nn.functional.binary_cross_entropy(predictions, batch_labels)
                 
                 loss.backward()
@@ -318,7 +322,8 @@ class SudokuLTNSolver:
             
             self.optimizer.zero_grad()
             
-            predictions = self.predicates.naked_single_model(batch_rows, batch_cols, batch_boards, batch_candidates)
+            batch_size_tensor = torch.full((len(batch_rows),), self.board_size, dtype=torch.long)
+            predictions = self.predicates.call_naked_single_model(batch_rows, batch_cols, batch_boards, batch_candidates, batch_size_tensor)
             loss = nn.functional.binary_cross_entropy(predictions, batch_labels)
             
             loss.backward()
@@ -349,7 +354,8 @@ class SudokuLTNSolver:
             
             self.optimizer.zero_grad()
             
-            predictions = self.predicates.hidden_single_model(batch_rows, batch_cols, batch_values, batch_boards, batch_unit_candidates)
+            batch_size_tensor = torch.full((len(batch_rows),), self.board_size, dtype=torch.long)
+            predictions = self.predicates.call_hidden_single_model(batch_rows, batch_cols, batch_values, batch_boards, batch_unit_candidates, batch_size_tensor)
             loss = nn.functional.binary_cross_entropy(predictions, batch_labels)
             
             loss.backward()
@@ -501,8 +507,9 @@ class SudokuLTNSolver:
                 c_tensor = torch.tensor([col])
                 board_batch = board_tensor.unsqueeze(0)
                 candidates_batch = candidates_vector.unsqueeze(0)
+                board_size_tensor = torch.tensor([self.board_size])
                 
-                confidence = self.predicates.naked_single_model(r_tensor, c_tensor, board_batch, candidates_batch)
+                confidence = self.predicates.call_naked_single_model(r_tensor, c_tensor, board_batch, candidates_batch, board_size_tensor)
                 
                 if confidence.item() > 0.7:  # Threshold de confiança
                     return (row, col, list(candidates)[0])
@@ -529,8 +536,9 @@ class SudokuLTNSolver:
                             v_tensor = torch.tensor([value])
                             board_batch = board_tensor.unsqueeze(0)
                             unit_info_batch = unit_info.unsqueeze(0)
+                            board_size_tensor = torch.tensor([self.board_size])
                             
-                            confidence = self.predicates.hidden_single_model(r_tensor, c_tensor, v_tensor, board_batch, unit_info_batch)
+                            confidence = self.predicates.call_hidden_single_model(r_tensor, c_tensor, v_tensor, board_batch, unit_info_batch, board_size_tensor)
                             
                             if confidence.item() > 0.7:
                                 return (row, col, value)
@@ -554,8 +562,9 @@ class SudokuLTNSolver:
                 c_tensor = torch.tensor([col])
                 v_tensor = torch.tensor([value])
                 board_batch = board_tensor.unsqueeze(0)
+                board_size_tensor = torch.tensor([self.board_size])
                 
-                confidence = self.predicates.valid_cell_model(r_tensor, c_tensor, v_tensor, board_batch)
+                confidence = self.predicates.call_valid_cell_model(r_tensor, c_tensor, v_tensor, board_batch, board_size_tensor)
                 
                 if confidence.item() > best_confidence:
                     best_confidence = confidence.item()

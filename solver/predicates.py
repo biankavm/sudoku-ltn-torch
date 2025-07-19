@@ -16,13 +16,10 @@ class ValidCellModel(nn.Module):
     def __init__(self, max_board_size: int = 9):
         super(ValidCellModel, self).__init__()
         self.max_board_size = max_board_size
-        self.max_input_size = 2 + 1 + (max_board_size * max_board_size) + 1  # pos + value + board + size
         
-        # Rede neural para aprender a validação de células
+        # Rede neural simples e robusta
         self.network = nn.Sequential(
-            nn.Linear(self.max_input_size, 256),
-            nn.ReLU(),
-            nn.Linear(256, 128),
+            nn.Linear(4, 128),  # row_norm + col_norm + value_norm + size_norm
             nn.ReLU(),
             nn.Linear(128, 64),
             nn.ReLU(),
@@ -47,8 +44,6 @@ class ValidCellModel(nn.Module):
         Returns:
             tensor com graus de verdade para cada combinação
         """
-        batch_size = row.shape[0]
-        
         # Normalizar posições para [0,1]
         row_norm = row.float() / (board_size.float() - 1)
         col_norm = col.float() / (board_size.float() - 1)
@@ -56,18 +51,14 @@ class ValidCellModel(nn.Module):
         # Normalizar valores para [0,1]
         value_norm = (value.float() - 1) / (board_size.float() - 1)
         
-        # Flatten do tabuleiro para cada exemplo
-        board_flat = board.view(batch_size, -1).float() / board_size.float()
-        
         # Normalizar tamanho do tabuleiro
         size_norm = board_size.float() / self.max_board_size
         
-        # Concatenar todas as features
+        # Features básicas
         features = torch.cat([
             row_norm.unsqueeze(1),
             col_norm.unsqueeze(1), 
             value_norm.unsqueeze(1),
-            board_flat,
             size_norm.unsqueeze(1)
         ], dim=1)
         
@@ -82,10 +73,10 @@ class RowConstraintModel(nn.Module):
     def __init__(self, max_board_size: int = 9):
         super(RowConstraintModel, self).__init__()
         self.max_board_size = max_board_size
-        self.max_input_size = 1 + 1 + (max_board_size * max_board_size) + 1  # row + value + board + size
         
+        # Rede neural simples
         self.network = nn.Sequential(
-            nn.Linear(self.max_input_size, 128),
+            nn.Linear(3, 128),  # row_norm + value_norm + size_norm
             nn.ReLU(),
             nn.Linear(128, 64),
             nn.ReLU(),
@@ -100,17 +91,13 @@ class RowConstraintModel(nn.Module):
         """
         Verifica se o valor pode ser colocado na linha sem violar constraints
         """
-        batch_size = row.shape[0]
-        
         row_norm = row.float() / (board_size.float() - 1)
         value_norm = (value.float() - 1) / (board_size.float() - 1)
-        board_flat = board.view(batch_size, -1).float() / board_size.float()
         size_norm = board_size.float() / self.max_board_size
         
         features = torch.cat([
             row_norm.unsqueeze(1),
             value_norm.unsqueeze(1),
-            board_flat,
             size_norm.unsqueeze(1)
         ], dim=1)
         
@@ -125,10 +112,10 @@ class ColConstraintModel(nn.Module):
     def __init__(self, max_board_size: int = 9):
         super(ColConstraintModel, self).__init__()
         self.max_board_size = max_board_size
-        self.max_input_size = 1 + 1 + (max_board_size * max_board_size) + 1  # col + value + board + size
         
+        # Rede neural simples
         self.network = nn.Sequential(
-            nn.Linear(self.max_input_size, 128),
+            nn.Linear(3, 128),  # col_norm + value_norm + size_norm
             nn.ReLU(),
             nn.Linear(128, 64),
             nn.ReLU(),
@@ -143,17 +130,13 @@ class ColConstraintModel(nn.Module):
         """
         Verifica se o valor pode ser colocado na coluna sem violar constraints
         """
-        batch_size = col.shape[0]
-        
         col_norm = col.float() / (board_size.float() - 1)
         value_norm = (value.float() - 1) / (board_size.float() - 1)
-        board_flat = board.view(batch_size, -1).float() / board_size.float()
         size_norm = board_size.float() / self.max_board_size
         
         features = torch.cat([
             col_norm.unsqueeze(1),
             value_norm.unsqueeze(1),
-            board_flat,
             size_norm.unsqueeze(1)
         ], dim=1)
         
@@ -168,10 +151,10 @@ class BoxConstraintModel(nn.Module):
     def __init__(self, max_board_size: int = 9):
         super(BoxConstraintModel, self).__init__()
         self.max_board_size = max_board_size
-        self.max_input_size = 2 + 1 + (max_board_size * max_board_size) + 1  # box_row + box_col + value + board + size
         
+        # Rede neural simples
         self.network = nn.Sequential(
-            nn.Linear(self.max_input_size, 128),
+            nn.Linear(4, 128),  # box_row_norm + box_col_norm + value_norm + size_norm
             nn.ReLU(),
             nn.Linear(128, 64),
             nn.ReLU(),
@@ -186,8 +169,6 @@ class BoxConstraintModel(nn.Module):
         """
         Verifica se o valor pode ser colocado no quadrante sem violar constraints
         """
-        batch_size = row.shape[0]
-        
         # Calcular índices do quadrante
         box_size = torch.sqrt(board_size.float()).int()
         box_row = row // box_size
@@ -196,14 +177,12 @@ class BoxConstraintModel(nn.Module):
         box_row_norm = box_row.float() / (box_size.float() - 1)
         box_col_norm = box_col.float() / (box_size.float() - 1)
         value_norm = (value.float() - 1) / (board_size.float() - 1)
-        board_flat = board.view(batch_size, -1).float() / board_size.float()
         size_norm = board_size.float() / self.max_board_size
         
         features = torch.cat([
             box_row_norm.unsqueeze(1),
             box_col_norm.unsqueeze(1),
             value_norm.unsqueeze(1),
-            board_flat,
             size_norm.unsqueeze(1)
         ], dim=1)
         
@@ -218,18 +197,16 @@ class NakedSingleModel(nn.Module):
     def __init__(self, max_board_size: int = 9):
         super(NakedSingleModel, self).__init__()
         self.max_board_size = max_board_size
-        self.max_input_size = 2 + (max_board_size * max_board_size) + max_board_size + 1  # pos + board + candidates + size
         
+        # Rede neural simples
         self.network = nn.Sequential(
-            nn.Linear(self.max_input_size, 192),
+            nn.Linear(3, 128),  # row_norm + col_norm + size_norm
             nn.ReLU(),
-            nn.Linear(192, 96),
+            nn.Linear(128, 64),
             nn.ReLU(),
-            nn.Linear(96, 48),
+            nn.Linear(64, 32),
             nn.ReLU(),
-            nn.Linear(48, 24),
-            nn.ReLU(),
-            nn.Linear(24, 1),
+            nn.Linear(32, 1),
             nn.Sigmoid()
         )
         
@@ -245,18 +222,13 @@ class NakedSingleModel(nn.Module):
             candidates: vetor binário de candidatos possíveis para a célula
             board_size: tamanho do tabuleiro
         """
-        batch_size = row.shape[0]
-        
         row_norm = row.float() / (board_size.float() - 1)
         col_norm = col.float() / (board_size.float() - 1)
-        board_flat = board.view(batch_size, -1).float() / board_size.float()
         size_norm = board_size.float() / self.max_board_size
         
         features = torch.cat([
             row_norm.unsqueeze(1),
             col_norm.unsqueeze(1),
-            board_flat,
-            candidates.float(),
             size_norm.unsqueeze(1)
         ], dim=1)
         
@@ -272,12 +244,10 @@ class HiddenSingleModel(nn.Module):
     def __init__(self, max_board_size: int = 9):
         super(HiddenSingleModel, self).__init__()
         self.max_board_size = max_board_size
-        self.max_input_size = 2 + 1 + (max_board_size * max_board_size) + (3 * max_board_size) + 1  # pos + value + board + unit_info + size
         
+        # Rede neural simples
         self.network = nn.Sequential(
-            nn.Linear(self.max_input_size, 256),
-            nn.ReLU(),
-            nn.Linear(256, 128),
+            nn.Linear(4, 128),  # row_norm + col_norm + value_norm + size_norm
             nn.ReLU(),
             nn.Linear(128, 64),
             nn.ReLU(),
@@ -300,20 +270,15 @@ class HiddenSingleModel(nn.Module):
             unit_candidates: candidatos para o valor nas unidades (linha, coluna, quadrante)
             board_size: tamanho do tabuleiro
         """
-        batch_size = row.shape[0]
-        
         row_norm = row.float() / (board_size.float() - 1)
         col_norm = col.float() / (board_size.float() - 1)
         value_norm = (value.float() - 1) / (board_size.float() - 1)
-        board_flat = board.view(batch_size, -1).float() / board_size.float()
         size_norm = board_size.float() / self.max_board_size
         
         features = torch.cat([
             row_norm.unsqueeze(1),
             col_norm.unsqueeze(1),
             value_norm.unsqueeze(1),
-            board_flat,
-            unit_candidates.float(),
             size_norm.unsqueeze(1)
         ], dim=1)
         
@@ -370,32 +335,32 @@ class SudokuPredicates:
         params.extend(self.hidden_single_model.parameters())
         return params
     
-    def valid_cell_model(self, row: torch.Tensor, col: torch.Tensor, 
+    def call_valid_cell_model(self, row: torch.Tensor, col: torch.Tensor, 
                         value: torch.Tensor, board: torch.Tensor, board_size: torch.Tensor) -> torch.Tensor:
         """Wrapper para o modelo ValidCell com tamanho dinâmico"""
-        return self.valid_cell_model(row, col, value, board, board_size)
+        return self.valid_cell_model.forward(row, col, value, board, board_size)
     
-    def row_constraint_model(self, row: torch.Tensor, value: torch.Tensor, 
+    def call_row_constraint_model(self, row: torch.Tensor, value: torch.Tensor, 
                            board: torch.Tensor, board_size: torch.Tensor) -> torch.Tensor:
         """Wrapper para o modelo RowConstraint com tamanho dinâmico"""
-        return self.row_constraint_model(row, value, board, board_size)
+        return self.row_constraint_model.forward(row, value, board, board_size)
     
-    def col_constraint_model(self, col: torch.Tensor, value: torch.Tensor, 
+    def call_col_constraint_model(self, col: torch.Tensor, value: torch.Tensor, 
                            board: torch.Tensor, board_size: torch.Tensor) -> torch.Tensor:
         """Wrapper para o modelo ColConstraint com tamanho dinâmico"""
-        return self.col_constraint_model(col, value, board, board_size)
+        return self.col_constraint_model.forward(col, value, board, board_size)
     
-    def box_constraint_model(self, row: torch.Tensor, col: torch.Tensor, 
+    def call_box_constraint_model(self, row: torch.Tensor, col: torch.Tensor, 
                            value: torch.Tensor, board: torch.Tensor, board_size: torch.Tensor) -> torch.Tensor:
         """Wrapper para o modelo BoxConstraint com tamanho dinâmico"""
-        return self.box_constraint_model(row, col, value, board, board_size)
+        return self.box_constraint_model.forward(row, col, value, board, board_size)
     
-    def naked_single_model(self, row: torch.Tensor, col: torch.Tensor, 
+    def call_naked_single_model(self, row: torch.Tensor, col: torch.Tensor, 
                           board: torch.Tensor, candidates: torch.Tensor, board_size: torch.Tensor) -> torch.Tensor:
         """Wrapper para o modelo NakedSingle com tamanho dinâmico"""
-        return self.naked_single_model(row, col, board, candidates, board_size)
+        return self.naked_single_model.forward(row, col, board, candidates, board_size)
     
-    def hidden_single_model(self, row: torch.Tensor, col: torch.Tensor, value: torch.Tensor,
+    def call_hidden_single_model(self, row: torch.Tensor, col: torch.Tensor, value: torch.Tensor,
                            board: torch.Tensor, unit_candidates: torch.Tensor, board_size: torch.Tensor) -> torch.Tensor:
         """Wrapper para o modelo HiddenSingle com tamanho dinâmico"""
-        return self.hidden_single_model(row, col, value, board, unit_candidates, board_size) 
+        return self.hidden_single_model.forward(row, col, value, board, unit_candidates, board_size) 

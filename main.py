@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Sistema LTN para Resolução de Sudoku - Versão Integrada
+Sistema LTN para Resolução de Sudoku - Versão Separada por Dimensão
 Projeto Final - Inteligência Artificial - UFAM
 Equipe: Bianka Vasconcelos, Micael Viana, Vinicius Chagas
 
-Este script treina modelos especializados para diferentes tipos de Sudoku
-e cria um modelo integrado final, suportando tanto tabuleiros 4x4 quanto 9x9.
+Este script treina modelos especializados separadamente para Sudoku 4x4 e 9x9,
+criando modelos independentes para cada dimensão.
 """
 
 import sys
@@ -339,132 +339,97 @@ def check_solvability(board: SudokuBoard, solver: SudokuLTNSolver) -> Dict:
             'remaining_positions': resultado.get('posicoes_restantes', 0)
         }
 
-def detect_board_size_from_data(data_dir: str) -> int:
+def get_training_configs_4x4(data_dir: str) -> List[Dict]:
     """
-    Detecta o tamanho do tabuleiro baseado nos arquivos CSV disponíveis
+    Retorna as configurações de treinamento para 4x4
     """
-    # Verificar se existem arquivos 4x4
-    files_4x4 = [
-        os.path.join(data_dir, "4x4", "sudoku_4x4_closed_valid.csv"),
-        os.path.join(data_dir, "4x4", "sudoku_4x4_closed_invalid.csv"),
-        os.path.join(data_dir, "4x4", "sudoku_4x4_open_solvable.csv"),
-        os.path.join(data_dir, "4x4", "sudoku_4x4_open_unsolvable.csv")
+    max_samples = 500
+    base_path = os.path.join(data_dir, "4x4")
+    
+    training_configs = [
+        {
+            "name": "Sudokus 4x4 Fechados Válidos",
+            "file": os.path.join(base_path, "sudoku_4x4_closed_valid.csv"),
+            "description": "Aprende a reconhecer sudokus 4x4 completos e corretos",
+            "max_samples": max_samples
+        },
+        {
+            "name": "Sudokus 4x4 Fechados Inválidos", 
+            "file": os.path.join(base_path, "sudoku_4x4_closed_invalid.csv"),
+            "description": "Aprende a identificar sudokus 4x4 completos mas incorretos",
+            "max_samples": max_samples
+        },
+        {
+            "name": "Sudokus 4x4 Abertos Solucionáveis",
+            "file": os.path.join(base_path, "sudoku_4x4_open_solvable.csv"), 
+            "description": "Aprende a resolver sudokus 4x4 parciais com solução",
+            "max_samples": max_samples
+        },
+        {
+            "name": "Sudokus 4x4 Abertos Impossíveis",
+            "file": os.path.join(base_path, "sudoku_4x4_open_unsolvable.csv"),
+            "description": "Aprende a identificar sudokus 4x4 impossíveis de resolver",
+            "max_samples": max_samples
+        }
     ]
-    
-    # Verificar se existem arquivos 9x9
-    files_9x9 = [
-        os.path.join(data_dir, "9x9", "sudoku_closed_valid.csv"),
-        os.path.join(data_dir, "9x9", "sudoku_closed_invalid.csv"),
-        os.path.join(data_dir, "9x9", "sudoku_open_solvable.csv"),
-        os.path.join(data_dir, "9x9", "sudoku_open_unsolvable.csv")
-    ]
-    
-    # Verificar se existem arquivos na raiz (formato antigo)
-    files_root = [
-        os.path.join(data_dir, "sudoku_closed_valid.csv"),
-        os.path.join(data_dir, "sudoku_closed_invalid.csv"),
-        os.path.join(data_dir, "sudoku_open_solvable.csv"),
-        os.path.join(data_dir, "sudoku_open_unsolvable.csv")
-    ]
-    
-    # Verificar qual conjunto de arquivos existe
-    if any(os.path.exists(f) for f in files_4x4):
-        print("📏 Detectado: Dados 4x4 disponíveis")
-        return 4
-    elif any(os.path.exists(f) for f in files_9x9):
-        print("📏 Detectado: Dados 9x9 disponíveis")
-        return 9
-    elif any(os.path.exists(f) for f in files_root):
-        print("📏 Detectado: Dados 9x9 na raiz disponíveis")
-        return 9
-    else:
-        print("⚠️  Não foi possível detectar o tamanho do tabuleiro. Usando 9x9 como padrão.")
-        return 9
-
-def get_training_configs(board_size: int, data_dir: str) -> List[Dict]:
-    """
-    Retorna as configurações de treinamento baseadas no tamanho do tabuleiro
-    """
-    max_samples_global = 500
-    
-    if board_size == 4:
-        # Configurações para 4x4
-        base_path = os.path.join(data_dir, "4x4")
-        training_configs = [
-            {
-                "name": "Sudokus 4x4 Fechados Válidos",
-                "file": os.path.join(base_path, "sudoku_4x4_closed_valid.csv"),
-                "description": "Aprende a reconhecer sudokus 4x4 completos e corretos",
-                "max_samples": max_samples_global
-            },
-            {
-                "name": "Sudokus 4x4 Fechados Inválidos", 
-                "file": os.path.join(base_path, "sudoku_4x4_closed_invalid.csv"),
-                "description": "Aprende a identificar sudokus 4x4 completos mas incorretos",
-                "max_samples": max_samples_global
-            },
-            {
-                "name": "Sudokus 4x4 Abertos Solucionáveis",
-                "file": os.path.join(base_path, "sudoku_4x4_open_solvable.csv"), 
-                "description": "Aprende a resolver sudokus 4x4 parciais com solução",
-                "max_samples": max_samples_global
-            },
-            {
-                "name": "Sudokus 4x4 Abertos Impossíveis",
-                "file": os.path.join(base_path, "sudoku_4x4_open_unsolvable.csv"),
-                "description": "Aprende a identificar sudokus 4x4 impossíveis de resolver",
-                "max_samples": max_samples_global
-            }
-        ]
-    else:
-        # Configurações para 9x9
-        base_path = os.path.join(data_dir, "9x9")
-        # Verificar se existe o diretório 9x9, senão usar a raiz
-        if not os.path.exists(base_path):
-            base_path = data_dir
-            
-        training_configs = [
-            {
-                "name": "Sudokus 9x9 Fechados Válidos",
-                "file": os.path.join(base_path, "sudoku_closed_valid.csv"),
-                "description": "Aprende a reconhecer sudokus 9x9 completos e corretos",
-                "max_samples": max_samples_global
-            },
-            {
-                "name": "Sudokus 9x9 Fechados Inválidos", 
-                "file": os.path.join(base_path, "sudoku_closed_invalid.csv"),
-                "description": "Aprende a identificar sudokus 9x9 completos mas incorretos",
-                "max_samples": max_samples_global
-            },
-            {
-                "name": "Sudokus 9x9 Abertos Solucionáveis",
-                "file": os.path.join(base_path, "sudoku_open_solvable.csv"), 
-                "description": "Aprende a resolver sudokus 9x9 parciais com solução",
-                "max_samples": max_samples_global
-            },
-            {
-                "name": "Sudokus 9x9 Abertos Impossíveis",
-                "file": os.path.join(base_path, "sudoku_open_unsolvable.csv"),
-                "description": "Aprende a identificar sudokus 9x9 impossíveis de resolver",
-                "max_samples": max_samples_global
-            }
-        ]
     
     return training_configs
 
-def train_specialized_models(solver: SudokuLTNSolver, data_dir: str = "data", epochs: int = 50):
+def get_training_configs_9x9(data_dir: str) -> List[Dict]:
     """
-    Treina modelos especializados para cada tipo de situação
+    Retorna as configurações de treinamento para 9x9
     """
-    print("\n🎯 TREINAMENTO ESPECIALIZADO POR SITUAÇÃO")
+    max_samples = 500
+    base_path = os.path.join(data_dir, "9x9")
+    
+    # Verificar se existe o diretório 9x9, senão usar a raiz
+    if not os.path.exists(base_path):
+        base_path = data_dir
+        
+    training_configs = [
+        {
+            "name": "Sudokus 9x9 Fechados Válidos",
+            "file": os.path.join(base_path, "sudoku_closed_valid.csv"),
+            "description": "Aprende a reconhecer sudokus 9x9 completos e corretos",
+            "max_samples": max_samples
+        },
+        {
+            "name": "Sudokus 9x9 Fechados Inválidos", 
+            "file": os.path.join(base_path, "sudoku_closed_invalid.csv"),
+            "description": "Aprende a identificar sudokus 9x9 completos mas incorretos",
+            "max_samples": max_samples
+        },
+        {
+            "name": "Sudokus 9x9 Abertos Solucionáveis",
+            "file": os.path.join(base_path, "sudoku_open_solvable.csv"), 
+            "description": "Aprende a resolver sudokus 9x9 parciais com solução",
+            "max_samples": max_samples
+        },
+        {
+            "name": "Sudokus 9x9 Abertos Impossíveis",
+            "file": os.path.join(base_path, "sudoku_open_unsolvable.csv"),
+            "description": "Aprende a identificar sudokus 9x9 impossíveis de resolver",
+            "max_samples": max_samples
+        }
+    ]
+    
+    return training_configs
+
+def train_model_for_dimension(board_size: int, data_dir: str, epochs: int = 50):
+    """
+    Treina um modelo para uma dimensão específica (4x4 ou 9x9)
+    """
+    print(f"\n🎯 TREINAMENTO PARA SUDOKU {board_size}x{board_size}")
     print("=" * 60)
     
-    # Detectar tamanho do tabuleiro
-    board_size = detect_board_size_from_data(data_dir)
-    print(f"🎲 Tamanho do tabuleiro detectado: {board_size}x{board_size}")
+    # Obter configurações de treinamento baseadas na dimensão
+    if board_size == 4:
+        training_configs = get_training_configs_4x4(data_dir)
+    else:
+        training_configs = get_training_configs_9x9(data_dir)
     
-    # Obter configurações de treinamento
-    training_configs = get_training_configs(board_size, data_dir)
+    # Inicializar solver para a dimensão específica
+    solver = SudokuLTNSolver(board_size=board_size)
     
     training_results = {}
     
@@ -511,26 +476,17 @@ def train_specialized_models(solver: SudokuLTNSolver, data_dir: str = "data", ep
             print(f"❌ Erro no treinamento: {e}")
             training_results[config['name']] = {'error': str(e)}
     
-    return training_results, board_size
-
-def create_integrated_model(solver: SudokuLTNSolver, training_results: Dict, board_size: int):
-    """
-    Cria um modelo integrado baseado nos treinamentos especializados
-    """
-    print("\n🔗 CRIANDO MODELO INTEGRADO")
-    print("=" * 60)
-    
-    # Salvar o modelo integrado com o tamanho do tabuleiro no nome
-    model_path = f"models/sudoku_ltn_integrated_{board_size}x{board_size}.pth"
+    # Salvar modelo para esta dimensão
+    model_path = f"models/sudoku_ltn_{board_size}x{board_size}.pth"
     os.makedirs("models", exist_ok=True)
     
-    print(f"💾 Salvando modelo integrado em: {model_path}")
+    print(f"\n💾 Salvando modelo {board_size}x{board_size} em: {model_path}")
     solver.save_model(model_path)
     
     # Criar relatório de treinamento
     report_path = f"models/training_report_{board_size}x{board_size}.txt"
     with open(report_path, 'w') as f:
-        f.write("RELATÓRIO DE TREINAMENTO - SISTEMA LTN SUDOKU\n")
+        f.write(f"RELATÓRIO DE TREINAMENTO - SISTEMA LTN SUDOKU {board_size}x{board_size}\n")
         f.write("=" * 60 + "\n")
         f.write(f"Data: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write(f"Equipe: Bianka Vasconcelos, Micael Viana, Vinicius Chagas\n")
@@ -563,20 +519,27 @@ def create_integrated_model(solver: SudokuLTNSolver, training_results: Dict, boa
         f.write(f"Modelo salvo em: {model_path}\n")
     
     print(f"📄 Relatório salvo em: {report_path}")
-    return model_path
+    return model_path, training_results
 
-def test_integrated_model(solver: SudokuLTNSolver, model_path: str, board_size: int):
+def test_model_for_dimension(board_size: int, model_path: str, data_dir: str):
     """
-    Testa o modelo integrado com diferentes tipos de sudoku
+    Testa um modelo para uma dimensão específica
     """
-    print("\n🧪 TESTANDO MODELO INTEGRADO")
+    print(f"\n🧪 TESTANDO MODELO {board_size}x{board_size}")
     print("=" * 60)
+    
+    # Inicializar solver
+    solver = SudokuLTNSolver(board_size=board_size)
     
     # Carregar o modelo
     print(f"📂 Carregando modelo: {model_path}")
-    solver.load_model(model_path)
+    if os.path.exists(model_path):
+        solver.load_model(model_path)
+    else:
+        print(f"❌ Modelo não encontrado: {model_path}")
+        return
     
-    # Definir arquivos de teste baseados no tamanho
+    # Definir arquivos de teste baseados na dimensão
     if board_size == 4:
         data_files = [
             ("data/4x4/sudoku_4x4_open_solvable.csv", "4x4 Aberto Solucionável"),
@@ -629,61 +592,25 @@ def test_integrated_model(solver: SudokuLTNSolver, model_path: str, board_size: 
                     except Exception as e:
                         print(f"    Erro no teste {i+1}: {e}")
 
-def demo_complete_system(solver: SudokuLTNSolver, data_dir: str, epochs: int):
-    """
-    Executa uma demonstração completa do sistema
-    """
-    print("\n🎯 DEMONSTRAÇÃO COMPLETA DO SISTEMA")
-    print("=" * 60)
-    
-    # Detectar tamanho do tabuleiro
-    board_size = detect_board_size_from_data(data_dir)
-    print(f"🎲 Tamanho do tabuleiro detectado: {board_size}x{board_size}")
-    
-    # Criar exemplo de sudoku baseado no tamanho
-    if board_size == 4:
-        print("\n📋 Exemplo de Sudoku 4x4:")
-        sample_board = create_sample_4x4_sudoku()
-        print(sample_board)
-        
-        print("\n📋 Exemplo de Sudoku 4x4 Impossível:")
-        impossible_board = create_unsolvable_4x4_sudoku()
-        print(impossible_board)
-    else:
-        print("\n📋 Exemplo de Sudoku 9x9:")
-        sample_board = create_sample_sudoku()
-        print(sample_board)
-    
-    # Treinar modelos especializados
-    training_results, detected_board_size = train_specialized_models(solver, data_dir, epochs)
-    
-    # Criar modelo integrado
-    model_path = create_integrated_model(solver, training_results, detected_board_size)
-    
-    # Testar modelo integrado
-    test_integrated_model(solver, model_path, detected_board_size)
-    
-    print(f"\n🎉 DEMONSTRAÇÃO CONCLUÍDA!")
-    print(f"Modelo integrado salvo em: {model_path}")
-
 def main():
     """
     Função principal do sistema
     """
-    parser = argparse.ArgumentParser(description='Sistema LTN para Resolução de Sudoku')
+    parser = argparse.ArgumentParser(description='Sistema LTN para Resolução de Sudoku - Versão Separada')
     parser.add_argument('--path', type=str, help='Caminho para o arquivo CSV com o tabuleiro')
-    parser.add_argument('--train', action='store_true', help='Treinar modelos especializados')
+    parser.add_argument('--train-4x4', action='store_true', help='Treinar modelo para 4x4')
+    parser.add_argument('--train-9x9', action='store_true', help='Treinar modelo para 9x9')
+    parser.add_argument('--test-4x4', action='store_true', help='Testar modelo 4x4')
+    parser.add_argument('--test-9x9', action='store_true', help='Testar modelo 9x9')
     parser.add_argument('--solve', action='store_true', help='Resolver um Sudoku')
-    parser.add_argument('--test', action='store_true', help='Testar modelo integrado')
     parser.add_argument('--epochs', type=int, default=30, help='Número de épocas de treinamento')
-    parser.add_argument('--demo', action='store_true', help='Executar demonstração completa')
     parser.add_argument('--data-dir', type=str, default='data', help='Diretório dos dados')
     parser.add_argument('--board-size', type=int, choices=[4, 9], help='Tamanho do tabuleiro (4 ou 9)')
     
     args = parser.parse_args()
     
     print("=" * 80)
-    print("SISTEMA LTN PARA RESOLUÇÃO DE SUDOKU - VERSÃO INTEGRADA")
+    print("SISTEMA LTN PARA RESOLUÇÃO DE SUDOKU - VERSÃO SEPARADA POR DIMENSÃO")
     print("Projeto Final - Inteligência Artificial - UFAM")
     print("Equipe: Bianka Vasconcelos, Micael Viana, Vinicius Chagas")
     print("=" * 80)
@@ -706,7 +633,7 @@ def main():
         solver = SudokuLTNSolver(board_size=board_size)
         
         # Carregar modelo se existir
-        model_path = f"models/sudoku_ltn_integrated_{board_size}x{board_size}.pth"
+        model_path = f"models/sudoku_ltn_{board_size}x{board_size}.pth"
         if os.path.exists(model_path):
             solver.load_model(model_path)
             print(f"✅ Modelo carregado: {model_path}")
@@ -753,60 +680,56 @@ def main():
         print(f"\n🎉 PROCESSAMENTO CONCLUÍDO!")
         return
     
-    # Funcionalidades existentes (treinamento, teste, etc.)
-    if args.demo:
-        print("\n🎯 EXECUTANDO DEMONSTRAÇÃO COMPLETA")
-        demo_complete_system(solver, args.data_dir, args.epochs)
-        return
+    # Treinar modelo 4x4
+    if args.train_4x4:
+        print(f"\n🎓 TREINANDO MODELO 4x4")
+        try:
+            model_path, training_results = train_model_for_dimension(4, args.data_dir, args.epochs)
+            print(f"\n🎉 TREINAMENTO 4x4 CONCLUÍDO!")
+            print(f"Modelo salvo em: {model_path}")
+        except Exception as e:
+            print(f"❌ Erro durante o treinamento 4x4: {e}")
+            import traceback
+            traceback.print_exc()
     
-    if args.train:
-        print(f"\n🎓 MODO TREINAMENTO ESPECIALIZADO")
-        print(f"Tamanho do tabuleiro: {board_size}x{board_size}")
-        print(f"Épocas por situação: {args.epochs}")
-        print(f"Diretório de dados: {args.data_dir}")
-        
-        # Treinar modelos especializados
-        training_results, detected_board_size = train_specialized_models(solver, args.data_dir, args.epochs)
-        
-        # Criar modelo integrado
-        model_path = create_integrated_model(solver, training_results, detected_board_size)
-        
-        print(f"\n🎉 TREINAMENTO CONCLUÍDO!")
-        print(f"Modelo integrado salvo em: {model_path}")
+    # Treinar modelo 9x9
+    if args.train_9x9:
+        print(f"\n🎓 TREINANDO MODELO 9x9")
+        try:
+            model_path, training_results = train_model_for_dimension(9, args.data_dir, args.epochs)
+            print(f"\n🎉 TREINAMENTO 9x9 CONCLUÍDO!")
+            print(f"Modelo salvo em: {model_path}")
+        except Exception as e:
+            print(f"❌ Erro durante o treinamento 9x9: {e}")
+            import traceback
+            traceback.print_exc()
     
-    if args.test:
-        # Detectar tamanho do tabuleiro
-        if args.board_size:
-            board_size = args.board_size
-        else:
-            board_size = detect_board_size_from_data(args.data_dir)
-        
-        # Inicializar solver
-        solver = SudokuLTNSolver(board_size=board_size)
-        
-        # Detectar modelo mais recente
-        model_path = f"models/sudoku_ltn_integrated_{board_size}x{board_size}.pth"
-        if os.path.exists(model_path):
-            test_integrated_model(solver, model_path, board_size)
-        else:
-            print(f"❌ Modelo não encontrado: {model_path}")
-            print("Execute o treinamento primeiro com --train")
+    # Testar modelo 4x4
+    if args.test_4x4:
+        model_path = "models/sudoku_ltn_4x4.pth"
+        test_model_for_dimension(4, model_path, args.data_dir)
     
+    # Testar modelo 9x9
+    if args.test_9x9:
+        model_path = "models/sudoku_ltn_9x9.pth"
+        test_model_for_dimension(9, model_path, args.data_dir)
+    
+    # Modo resolução
     if args.solve:
         # Detectar tamanho do tabuleiro
         if args.board_size:
             board_size = args.board_size
         else:
-            board_size = detect_board_size_from_data(args.data_dir)
+            print("❌ Para --solve, especifique --board-size 4 ou 9")
+            return
         
         # Inicializar solver
         solver = SudokuLTNSolver(board_size=board_size)
         
-        print(f"\n🧩 MODO RESOLUÇÃO")
-        print(f"Tamanho do tabuleiro: {board_size}x{board_size}")
+        print(f"\n🧩 MODO RESOLUÇÃO {board_size}x{board_size}")
         
         # Carregar modelo se existir
-        model_path = f"models/sudoku_ltn_integrated_{board_size}x{board_size}.pth"
+        model_path = f"models/sudoku_ltn_{board_size}x{board_size}.pth"
         if os.path.exists(model_path):
             solver.load_model(model_path)
             print(f"✅ Modelo carregado: {model_path}")
@@ -833,20 +756,26 @@ def main():
             print(board)
     
     # Se nenhum argumento foi fornecido, mostrar ajuda
-    if not any([args.path, args.train, args.solve, args.test, args.demo]):
+    if not any([args.path, args.train_4x4, args.train_9x9, args.test_4x4, args.test_9x9, args.solve]):
         print("\n📖 USO:")
         print("  python main.py --path arquivo.csv")
-        print("  python main.py --train --epochs 30")
-        print("  python main.py --solve")
-        print("  python main.py --test")
-        print("  python main.py --demo")
+        print("  python main.py --train-4x4 --epochs 30")
+        print("  python main.py --train-9x9 --epochs 30")
+        print("  python main.py --test-4x4")
+        print("  python main.py --test-9x9")
+        print("  python main.py --solve --board-size 4")
+        print("  python main.py --solve --board-size 9")
         print("\n📋 EXEMPLOS:")
         print("  # Processar um tabuleiro do arquivo CSV")
         print("  python main.py --path data/meu_sudoku.csv")
-        print("\n  # Treinar modelos")
-        print("  python main.py --train --epochs 50")
-        print("\n  # Testar sistema")
-        print("  python main.py --test")
+        print("\n  # Treinar modelo 4x4")
+        print("  python main.py --train-4x4 --epochs 50")
+        print("\n  # Treinar modelo 9x9")
+        print("  python main.py --train-9x9 --epochs 50")
+        print("\n  # Testar modelo 4x4")
+        print("  python main.py --test-4x4")
+        print("\n  # Resolver sudoku 4x4")
+        print("  python main.py --solve --board-size 4")
 
 if __name__ == "__main__":
     main()
