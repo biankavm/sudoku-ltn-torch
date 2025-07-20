@@ -22,8 +22,8 @@ def main():
     Script principal para treinar todos os modelos
     """
     parser = argparse.ArgumentParser(description='Treinar Todos os Modelos LTN Sudoku')
-    parser.add_argument('--epochs-4x4', type=int, default=50, help='Número de épocas para modelo 4x4')
-    parser.add_argument('--epochs-9x9', type=int, default=50, help='Número de épocas para modelo 9x9')
+    parser.add_argument('--epochs-4x4', type=int, default=20, help='Número de épocas para modelo 4x4')
+    parser.add_argument('--epochs-9x9', type=int, default=20, help='Número de épocas para modelo 9x9')
     parser.add_argument('--data-dir', type=str, default='data', help='Diretório dos dados')
     parser.add_argument('--skip-4x4', action='store_true', help='Pular treinamento 4x4')
     parser.add_argument('--skip-9x9', action='store_true', help='Pular treinamento 9x9')

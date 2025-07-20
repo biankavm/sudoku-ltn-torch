@@ -1,6 +1,6 @@
 RELATÓRIO DE TREINAMENTO - SISTEMA LTN SUDOKU 4x4
 ============================================================
-Data: 2025-07-20 15:03:32
+Data: 2025-07-20 00:11:53
 Equipe: Bianka Vasconcelos, Micael Viana, Vinicius Chagas
 Tamanho do tabuleiro: 4x4
 
@@ -9,34 +9,34 @@ RESULTADOS POR SITUAÇÃO:
 
 Sudokus 4x4 Fechados Válidos:
   Amostras: 20000
-  Épocas: 20
-  Tempo: 979.67s
+  Épocas: 100
+  Tempo: 4961.52s
   Loss final: 0.0053
   Satisfação final: 0.5008
 
 Sudokus 4x4 Fechados Inválidos:
   Amostras: 20000
-  Épocas: 20
-  Tempo: 1047.17s
-  Loss final: 16.0731
+  Épocas: 100
+  Tempo: 5204.42s
+  Loss final: 16.0708
   Satisfação final: 0.7129
 
 Sudokus 4x4 Abertos Solucionáveis:
   Amostras: 20000
-  Épocas: 20
-  Tempo: 1891.64s
-  Loss final: 17.1238
+  Épocas: 100
+  Tempo: 9110.78s
+  Loss final: 17.1203
   Satisfação final: 0.5023
 
 Sudokus 4x4 Abertos Impossíveis:
   Amostras: 20000
-  Épocas: 20
-  Tempo: 2163.04s
+  Épocas: 100
+  Tempo: 10014.39s
   Loss final: 19.1609
   Satisfação final: 0.5090
 
 RESUMO GERAL:
 Tamanho do tabuleiro: 4x4
 Total de amostras: 80000
-Tempo total: 6081.51s
+Tempo total: 29291.10s
 Modelo salvo em: models/sudoku_ltn_4x4.pth

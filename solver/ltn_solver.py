@@ -246,6 +246,22 @@ class SudokuLTNSolver:
                 
                 batch_size_tensor = torch.full((len(batch_indices),), self.board_size, dtype=torch.long)
                 predictions = self.predicates.call_row_constraint_model(batch_indices, batch_values, batch_boards, batch_size_tensor)
+                
+                # Garantir que predictions e batch_labels tenham dimensões compatíveis
+                if predictions.dim() == 0:  # Se predictions é escalar
+                    predictions = predictions.unsqueeze(0)  # Adicionar dimensão
+                if batch_labels.dim() == 0:  # Se batch_labels é escalar
+                    batch_labels = batch_labels.unsqueeze(0)  # Adicionar dimensão
+                
+                # Verificar se as dimensões são compatíveis
+                if predictions.shape != batch_labels.shape:
+                    # Ajustar dimensões se necessário
+                    if predictions.numel() == batch_labels.numel():
+                        predictions = predictions.view_as(batch_labels)
+                    else:
+                        print(f"⚠️  Aviso: Dimensões incompatíveis - predictions: {predictions.shape}, labels: {batch_labels.shape}")
+                        continue  # Pular este batch
+                
                 loss = nn.functional.binary_cross_entropy(predictions, batch_labels)
                 
                 loss.backward()
@@ -269,6 +285,22 @@ class SudokuLTNSolver:
                 
                 batch_size_tensor = torch.full((len(batch_indices),), self.board_size, dtype=torch.long)
                 predictions = self.predicates.call_col_constraint_model(batch_indices, batch_values, batch_boards, batch_size_tensor)
+                
+                # Garantir que predictions e batch_labels tenham dimensões compatíveis
+                if predictions.dim() == 0:  # Se predictions é escalar
+                    predictions = predictions.unsqueeze(0)  # Adicionar dimensão
+                if batch_labels.dim() == 0:  # Se batch_labels é escalar
+                    batch_labels = batch_labels.unsqueeze(0)  # Adicionar dimensão
+                
+                # Verificar se as dimensões são compatíveis
+                if predictions.shape != batch_labels.shape:
+                    # Ajustar dimensões se necessário
+                    if predictions.numel() == batch_labels.numel():
+                        predictions = predictions.view_as(batch_labels)
+                    else:
+                        print(f"⚠️  Aviso: Dimensões incompatíveis - predictions: {predictions.shape}, labels: {batch_labels.shape}")
+                        continue  # Pular este batch
+                
                 loss = nn.functional.binary_cross_entropy(predictions, batch_labels)
                 
                 loss.backward()
@@ -293,6 +325,22 @@ class SudokuLTNSolver:
                 
                 batch_size_tensor = torch.full((len(batch_row_indices),), self.board_size, dtype=torch.long)
                 predictions = self.predicates.call_box_constraint_model(batch_row_indices, batch_col_indices, batch_values, batch_boards, batch_size_tensor)
+                
+                # Garantir que predictions e batch_labels tenham dimensões compatíveis
+                if predictions.dim() == 0:  # Se predictions é escalar
+                    predictions = predictions.unsqueeze(0)  # Adicionar dimensão
+                if batch_labels.dim() == 0:  # Se batch_labels é escalar
+                    batch_labels = batch_labels.unsqueeze(0)  # Adicionar dimensão
+                
+                # Verificar se as dimensões são compatíveis
+                if predictions.shape != batch_labels.shape:
+                    # Ajustar dimensões se necessário
+                    if predictions.numel() == batch_labels.numel():
+                        predictions = predictions.view_as(batch_labels)
+                    else:
+                        print(f"⚠️  Aviso: Dimensões incompatíveis - predictions: {predictions.shape}, labels: {batch_labels.shape}")
+                        continue  # Pular este batch
+                
                 loss = nn.functional.binary_cross_entropy(predictions, batch_labels)
                 
                 loss.backward()

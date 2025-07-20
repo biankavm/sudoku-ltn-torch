@@ -1,0 +1,42 @@
+RELATÓRIO DE TREINAMENTO - SISTEMA LTN SUDOKU 9x9
+============================================================
+Data: 2025-07-20 15:23:21
+Equipe: Bianka Vasconcelos, Micael Viana, Vinicius Chagas
+Tamanho do tabuleiro: 9x9
+
+RESULTADOS POR SITUAÇÃO:
+----------------------------------------
+
+Sudokus 9x9 Fechados Válidos:
+  Amostras: 500
+  Épocas: 20
+  Tempo: 118.16s
+  Loss final: 0.0000
+  Satisfação final: 0.5000
+
+Sudokus 9x9 Fechados Inválidos:
+  Amostras: 433
+  Épocas: 20
+  Tempo: 102.55s
+  Loss final: 0.1598
+  Satisfação final: 0.5078
+
+Sudokus 9x9 Abertos Solucionáveis:
+  Amostras: 500
+  Épocas: 20
+  Tempo: 414.02s
+  Loss final: 20.5416
+  Satisfação final: 0.4622
+
+Sudokus 9x9 Abertos Impossíveis:
+  Amostras: 500
+  Épocas: 20
+  Tempo: 553.84s
+  Loss final: 21.9151
+  Satisfação final: 0.4484
+
+RESUMO GERAL:
+Tamanho do tabuleiro: 9x9
+Total de amostras: 1933
+Tempo total: 1188.57s
+Modelo salvo em: models/sudoku_ltn_9x9.pth

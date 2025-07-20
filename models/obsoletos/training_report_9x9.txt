@@ -1,0 +1,38 @@
+RELATÓRIO DE TREINAMENTO - SISTEMA LTN SUDOKU 9x9
+============================================================
+Data: 2025-07-20 01:51:37
+Equipe: Bianka Vasconcelos, Micael Viana, Vinicius Chagas
+Tamanho do tabuleiro: 9x9
+
+RESULTADOS POR SITUAÇÃO:
+----------------------------------------
+
+Sudokus 9x9 Fechados Válidos:
+  Amostras: 500
+  Épocas: 100
+  Tempo: 733.01s
+  Loss final: 0.0000
+  Satisfação final: 0.5000
+
+Sudokus 9x9 Fechados Inválidos:
+  ❌ Erro: Using a target size (torch.Size([1])) that is different to the input size (torch.Size([])) is deprecated. Please ensure they have the same size.
+
+Sudokus 9x9 Abertos Solucionáveis:
+  Amostras: 500
+  Épocas: 100
+  Tempo: 2485.05s
+  Loss final: 20.5414
+  Satisfação final: 0.4621
+
+Sudokus 9x9 Abertos Impossíveis:
+  Amostras: 500
+  Épocas: 100
+  Tempo: 2761.61s
+  Loss final: 21.9150
+  Satisfação final: 0.4485
+
+RESUMO GERAL:
+Tamanho do tabuleiro: 9x9
+Total de amostras: 1500
+Tempo total: 5979.67s
+Modelo salvo em: models/sudoku_ltn_9x9.pth
