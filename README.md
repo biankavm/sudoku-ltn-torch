@@ -20,7 +20,7 @@ Desenvolver uma solução em LTN Torch que resolva o problema do Sudoku com mode
 ## Dependências
 
 - torch
-- LTN
+- LTN Torch
 - numpy
 - argparse
 
@@ -70,13 +70,6 @@ python main.py --path data/sudokus/meusudoku.csv
 ```bash
 python main.py --train-4x4 --epochs 50
 python main.py --train-9x9 --epochs 50
-```
-
-#### Resolver sudoku
-
-```bash
-python main.py --solve --board-size 4
-python main.py --solve --board-size 9
 ```
 
 ## Heurísticas Implementadas

@@ -23,62 +23,6 @@ sys.path.append(str(Path(__file__).parent))
 from core.sudoku_board import SudokuBoard
 from solver.ltn_solver import SudokuLTNSolver
 
-def create_sample_sudoku():
-    """
-    Cria um tabuleiro Sudoku de exemplo 9x9 para demonstração
-    """
-    # Tabuleiro 9x9 parcialmente preenchido
-    board_data = [
-        [5, 3, 0, 0, 7, 0, 0, 0, 0],
-        [6, 0, 0, 1, 9, 5, 0, 0, 0],
-        [0, 9, 8, 0, 0, 0, 0, 6, 0],
-        [8, 0, 0, 0, 6, 0, 0, 0, 3],
-        [4, 0, 0, 8, 0, 3, 0, 0, 1],
-        [7, 0, 0, 0, 2, 0, 0, 0, 6],
-        [0, 6, 0, 0, 0, 0, 2, 8, 0],
-        [0, 0, 0, 4, 1, 9, 0, 0, 5],
-        [0, 0, 0, 0, 8, 0, 0, 7, 9]
-    ]
-    return SudokuBoard(board_data)
-
-def create_sample_4x4_sudoku():
-    """
-    Cria um tabuleiro Sudoku de exemplo 4x4 para demonstração
-    """
-    # Tabuleiro 4x4 parcialmente preenchido
-    board_data = [
-        [1, 0, 3, 4],
-        [3, 4, 0, 2],
-        [0, 1, 4, 3],
-        [4, 3, 2, 0]
-    ]
-    return SudokuBoard(board_data)
-
-def create_unsolvable_4x4_sudoku():
-    """
-    Cria um sudoku 4x4 impossível para demonstração
-    """
-    # Sudoku 4x4 com conflito na primeira linha (dois números 1)
-    board_data = [
-        [1, 1, 3, 4],  # Conflito: dois números 1 na mesma linha
-        [3, 4, 0, 2],
-        [0, 1, 4, 3],
-        [4, 3, 2, 0]
-    ]
-    return SudokuBoard(board_data)
-
-def create_another_unsolvable_4x4_sudoku():
-    """
-    Cria outro sudoku 4x4 impossível para demonstração
-    """
-    # Sudoku 4x4 com conflito na primeira coluna (dois números 1)
-    board_data = [
-        [1, 0, 3, 4],
-        [1, 4, 0, 2],  # Conflito: dois números 1 na mesma coluna
-        [0, 1, 4, 3],
-        [4, 3, 2, 0]
-    ]
-    return SudokuBoard(board_data)
 
 def sudoku_string_to_board(sudoku_str: str) -> SudokuBoard:
     """
@@ -743,7 +687,6 @@ def main():
     parser.add_argument('--train-9x9', action='store_true', help='Treinar modelo para 9x9')
     parser.add_argument('--test-4x4', action='store_true', help='Testar modelo 4x4')
     parser.add_argument('--test-9x9', action='store_true', help='Testar modelo 9x9')
-    parser.add_argument('--solve', action='store_true', help='Resolver um Sudoku')
     parser.add_argument('--epochs', type=int, default=30, help='Número de épocas de treinamento')
     parser.add_argument('--data-dir', type=str, default='data', help='Diretório dos dados')
     parser.add_argument('--board-size', type=int, choices=[4, 9], help='Tamanho do tabuleiro (4 ou 9)')
@@ -855,47 +798,6 @@ def main():
         model_path = "models/sudoku_ltn_9x9.pth"
         test_model_for_dimension(9, model_path, args.data_dir)
     
-    # Modo resolução
-    if args.solve:
-        # Detectar tamanho do tabuleiro
-        if args.board_size:
-            board_size = args.board_size
-        else:
-            print("❌ Para --solve, especifique --board-size 4 ou 9")
-            return
-        
-        # Inicializar solver
-        solver = SudokuLTNSolver(board_size=board_size)
-        
-        print(f"\n🧩 MODO RESOLUÇÃO {board_size}x{board_size}")
-        
-        # Carregar modelo se existir
-        model_path = f"models/sudoku_ltn_{board_size}x{board_size}.pth"
-        if os.path.exists(model_path):
-            solver.load_model(model_path)
-            print(f"✅ Modelo carregado: {model_path}")
-        else:
-            print(f"⚠️  Modelo não encontrado: {model_path}")
-            print("Executando sem modelo pré-treinado...")
-        
-        # Criar exemplo baseado no tamanho
-        if board_size == 4:
-            board = create_sample_4x4_sudoku()
-        else:
-            board = create_sample_sudoku()
-        
-        print("\n📋 Sudoku para resolver:")
-        print(board)
-        
-        # Tentar resolver
-        resultado = solver.solve_sudoku(board)
-        print(f"\n🎯 Resultado: {resultado['sucesso']}")
-        print(f"📝 Motivo: {resultado['motivo']}")
-        
-        if resultado['sucesso']:
-            print("\n📋 Sudoku resolvido:")
-            print(board)
-    
     # Se nenhum argumento foi fornecido, mostrar ajuda
     if not any([args.path, args.train_4x4, args.train_9x9, args.test_4x4, args.test_9x9, args.solve]):
         print("\n📖 USO:")
@@ -904,8 +806,6 @@ def main():
         print("  python main.py --train-9x9 --epochs 30")
         print("  python main.py --test-4x4")
         print("  python main.py --test-9x9")
-        print("  python main.py --solve --board-size 4")
-        print("  python main.py --solve --board-size 9")
         print("\n📋 EXEMPLOS:")
         print("  # Processar um tabuleiro do arquivo CSV")
         print("  python main.py --path data/meu_sudoku.csv")
