@@ -1,4 +1,4 @@
-# Sistema LTN para Resolução de Sudoku
+# Trabalho de Inteligência Artificial (2025/1): Sistema LTN para Resolver o Problema do Sudoku
 
 ## Equipe
 
