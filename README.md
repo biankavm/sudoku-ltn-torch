@@ -28,6 +28,23 @@ Desenvolver uma solução em LTN Torch que resolva o problema do Sudoku com mode
 
 ### Treinamento dos Modelos
 
+Treinamos os modelos usando dados que foram majoriamente gerados por scripts na pasta `/scripts` juntamente a isso utilizamos os sudokus 9x9 disponibilizados pelo site da Kaggle [Referência aqui](https://www.kaggle.com/datasets/bryanpark/sudoku?resource=download).
+
+Treinamos os modelos por 20 épocas para cada caso, tanto 4x4 (para gerar o modelo 4x4) como 9x9 (para gerar o modelo 9x9). Sendo eles os seguintes casos:
+
+- 4x4:
+  - Sudokus 4x4 Fechados Válidos
+  - Sudokus 4x4 Fechados Inválidos
+  - Sudokus 4x4 Abertos Solucionáveis
+  - Sudokus 4x4 Abertos Impossíveis
+- 9x9:
+  - Sudokus 9x9 Fechados Válidos
+  - Sudokus 9x9 Fechados Inválidos
+  - Sudokus 9x9 Abertos Solucionáveis
+  - Sudokus 9x9 Abertos Impossíveis
+
+O modelo 4x4 foi treinado com 20 mil amostras de dados de treinamento para cada um dos casos. Enquanto o modelo 9x9 foi treinado com 500 amostras para cada caso.
+
 #### Treinar Modelo 4x4
 
 ```bash
