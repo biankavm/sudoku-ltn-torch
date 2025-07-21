@@ -45,6 +45,16 @@ Treinamos os modelos por 20 épocas para cada caso, tanto 4x4 (para gerar o mode
 
 O modelo 4x4 foi treinado com 20 mil amostras de dados de treinamento para cada um dos casos. Enquanto o modelo 9x9 foi treinado com 500 amostras para cada caso.
 
+Para o treinamento das heurísticas foi utilizada a geração de bases de dados via script por meio de funções que definem os axiomas conforme cada heurística. Este comportamento se encontra no arquivo `knowledge_base.py`.
+
+#### **Processo de Resolução**
+
+1. **Análise inicial**: Identifica células vazias e candidatos possíveis
+2. **Aplicação de Naked Singles**: Preenche células com candidato único
+3. **Aplicação de Hidden Singles**: Preenche números únicos em unidades
+4. **Iteração**: Repete o processo até não haver mais movimentos óbvios
+5. **Resultado**: Retorna solução completa ou parcial
+
 #### Treinar Modelo 4x4
 
 ```bash
