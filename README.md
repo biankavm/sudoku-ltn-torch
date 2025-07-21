@@ -120,7 +120,7 @@ python main.py --path sudokus/exemplo_4x4_aberto_valido.csv
 python main.py --path sudokus/exemplo_9x9_aberto_valido.csv
 ```
 
-O sistema possui um mecanismo inteligente que detecta automaticamente qual questão resolver:
+O sistema possui um mecanismo inteligente que detecta automaticamente a dimensão do tabuleiro. Se o tabuleiro estiver fechado, ele parte para a resolução da questão 1. Se ele estiver aberto, o sistema pergunta qual questão resolver (2 ou 3):
 
 - **Questão 1**: Se o tabuleiro está **completamente preenchido** (fechado), o sistema valida se é uma solução válida
 - **Questão 2**: Se o tabuleiro tem **células vazias** (aberto), o sistema classifica se é solucionável
