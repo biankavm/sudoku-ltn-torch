@@ -20,13 +20,13 @@ class SudokuKnowledgeBase:
         self.board_size = board_size
         self.predicates = SudokuPredicates(board_size)
         
-        # Operadores lógicos LTN - versão correta
-        self.And = ltn.Wrapper_Connective(ltn.fuzzy_ops.And_Prod())
-        self.Or = ltn.Wrapper_Connective(ltn.fuzzy_ops.Or_ProbSum())
-        self.Not = ltn.Wrapper_Connective(ltn.fuzzy_ops.Not_Std())
-        self.Implies = ltn.Wrapper_Connective(ltn.fuzzy_ops.Implies_Reichenbach())
-        self.Forall = ltn.Wrapper_Quantifier(ltn.fuzzy_ops.Aggreg_pMeanError(p=2), semantics="forall")
-        self.Exists = ltn.Wrapper_Quantifier(ltn.fuzzy_ops.Aggreg_pMean(p=2), semantics="exists")
+        # Operadores lógicos LTN
+        self.Not = ltn.Connective(ltn.fuzzy_ops.NotStandard())
+        self.And = ltn.Connective(ltn.fuzzy_ops.AndProd())
+        self.Or = ltn.Connective(ltn.fuzzy_ops.OrProbSum())
+        self.Implies = ltn.Connective(ltn.fuzzy_ops.ImpliesReichenbach())
+        self.Forall = ltn.Quantifier(ltn.fuzzy_ops.AggregPMeanError(p=2), quantifier="f")
+        self.Exists = ltn.Quantifier(ltn.fuzzy_ops.AggregPMean(p=2), quantifier="e")
         
     def get_basic_sudoku_axioms(self, board_tensor: torch.Tensor) -> List[torch.Tensor]:
         """
